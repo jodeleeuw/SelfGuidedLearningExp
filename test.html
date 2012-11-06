@@ -11,12 +11,12 @@
 </body>
 <script type="text/javascript">
 var display_loc = $('#target');
-var trial_generator = new TrialGenerator( "CC", false );
+var trial_generator = new TrialGenerator( "RR", false );
 // change the first arg to the TrialGenerator constructor to see different conditions
-// CC: continuous within and between categories
-// CR: continuous within, random between categories
-// RC: random between, continuous within categories
-// RR: random between and within categoriesvar display_loc = $('#target');
+// RR: related within and between categories
+// RU: related within, unrelated between categories
+// UR: unrelated within, related between categories
+// UU: unrelated within and between categories
 var prepend_data = { "subjid": Math.floor(1000*Math.random(1000)) };
 startExperiment( display_loc, prepend_data, trial_generator );
 </script>
