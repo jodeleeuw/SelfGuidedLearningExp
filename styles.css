@@ -1,0 +1,16 @@
+p { font-family: 'Palatino Linotype'; font-size: 18px; }
+
+table { font-family: 'Palatino Linotype'; font-size: 18px; }
+
+em { font-weight: bold; font-style: normal; }
+
+button { font-family:'Palatino Linotype',sans-serif; font-size:14px; }
+
+#wrapper { width: 600px; margin: 40px auto 0px auto; }
+
+#feedback { border: 1px solid #aaf; background-color: #ddf; padding: 10px; margin-top: 30px; }
+
+.option_buttons {
+    width:120px; height:100px;
+    vertical-align:top
+}

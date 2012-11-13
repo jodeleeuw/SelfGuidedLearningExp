@@ -79,7 +79,7 @@ function doTrial( display_loc, callback ) {
     // generate continue buttons and function for them to call on click
     var option_buttons = '';
     for ( var i=0; i<trial.options.length; i++ ) {
-        option_buttons += '<button type="button" class="option_buttons" id="option_button_'+i+'">'+trial.options[i]+'</button>';
+        option_buttons += '<button type="button" class="option_buttons" id="option_button_'+i+'">'+trial.options[i]+'</button>  ';
     }
     var returnResult = function( i ) {
         display_loc.html('');
@@ -92,10 +92,12 @@ function doTrial( display_loc, callback ) {
 TBD (Josh?/David): the look of this is pretty primitive right now. I suspect this can be solved with css but I don't know from css - can Josh help with this?
 */
     display_loc.html( 
+        '<div id="wrapper">' +
         '<div id="question"><p>' + trial.question + '</p></div>' +
         '<div id="answer"><p><input type="text" id="answer_box"></input><button type="button" id="answer_button">Show the answer</button></p></div>' +
         '<div id="feedback"></div>' +
-        '<div id="continue"><p>' + option_buttons + '</p></div>'
+        '<div id="continue"><p>Choose the next problem:</p><p>' + option_buttons + '</p></div>' +
+        '</div>'
     );
     $('.option_buttons').click( function() { returnResult(Number(this.id.replace("option_button_",""))); } );
     // hide feedback and submit buttons until user clicks answer_button
@@ -130,7 +132,12 @@ TrialGenerator = function( condition, items ) {
 /*
 TBD (Paulo/David): the story content below is just a placeholder. Eventually trialspecs should be instantiated using content passed in via the items param. We should ensure that the number of stories and is the same for each category. We should have enough stories that people are unlikely to exhaust them, but if people do, the code will respond gracefully by looping back to the beginning.
 */
-    this.stories    = [ "Story 1", "Story 2", "Story 3" ];
+    this.stories    = [ 
+        { text: "The scores of several students on a 10-point pop quiz are shown below.", ques: "students' test scores", min: 3, max: 10 },
+        { text: "The data below shows the numbers of stories of several buildings in a neighborhood.", ques: "number of stories", min: 1, max: 6 },
+        { text: "In a marketing research study, several consumers each rated how much they liked a product on a scale of 1 to 5. Their ratings are shown below.", ques: "their ratings", min: 1, max: 5 },
+        { text: "Several fishermen went fishing on the same day. Below you can how many fish the different fishermen caught.", ques: "number of fish caught", min: 0, max: 8 }
+    ];
     // minimum that must be completed per category in order to finish the worksheet
     // and actual number completed for each category (initialized to 0)
     var minimum_complete = 2;
@@ -188,14 +195,14 @@ function getNextTrial( next_cat ) {
     var bar = this.getProgressBar();
     // record story selection; generate story text
     this.prev_story = next_story;
-    var story    = "<p>" + this.stories[ next_story ] + "</p>";
+    var story    = "<p>" + this.stories[ next_story ][ "text" ] + "</p>";
     // generate data set, store array version in this and save text version for trial spec
-    D = this.getDataset( data_relation );
+    D = this.getDataset( data_relation, this.stories[next_story]["min"], this.stories[next_story]["max"] );
     this.dataset = D["dataset"];
     var dataset_text = D["HTML"];
     // question
     var measure = this.categories[ next_cat ];
-    var question = "<p>Find the " + measure + " of this data. (Round off to 2 decimal places.)</p>";
+    var question = "<p>Find the " + measure + " of the " + this.stories[next_story]["ques"] + ". (Round off to 2 decimal places.)</p>";
     // feedback text
     var answer = getCentTend( this.dataset, measure, 2 );
     var feedback = { false: "<img src='small-red-x-mark-th.png'>  " + " Oops, that's not correct. The " + measure + " is " + answer + ".",
@@ -204,9 +211,9 @@ function getNextTrial( next_cat ) {
     // options buttons (include Quit only if minimum completes reached)
     // eventually option text should be sensitive to condition
     var options = [
-        ["See another example about <b>Mean</b>","See an example about <b>Median</b>","See an example about <b>Mode</b>"],
-        ["See an example about <b>Mean</b>","See another example about <b>Median</b>","See an example about <b>Mode</b>"],
-        ["See an example about <b>Mean</b>","See an example about <b>Median</b>","See another example about <b>Mode</b>"] ]
+        ["See another example<br>about <em>Mean</em>","See an example<br>about <b>Median</em>","See an example<br>about <em>Mode</em>"],
+        ["See an example<br>about <em>Mean</em>","See another example<br>about <em>Median</em>","See an example<br>about <em>Mode</em>"],
+        ["See an example<br>about <em>Mean</em>","See an example<br>about <em>Median</em>","See another example<br>about <em>Mode</em>"] ]
         [next_cat];
     var quit_option = true;
     for ( var i=0; i<this.categories.length; i++ ) {
@@ -227,12 +234,11 @@ function getNextTrial( next_cat ) {
 //  if relation is random, new data is completely random within constraints of current value of this.story
 //  if relation is identical, new data is same as old data
 //  if relation is related, new data is a tweak of old data with changes highlighted in the HTML
-function getDataset( relation ) {
-    // currently does not work - the code below is just placeholder
-    var min=0; var max=3; var length=3;
+function getDataset( relation, min, max ) {
+    var length=5;
     var dataset = [];
     for ( var i=0; i<length; i++ ) {
-        dataset.push( min + Math.floor( Math.random()*(max+1) ) );
+        dataset.push( min + Math.floor( Math.random()*(max-min+1) ) );
     }
     var result = "<p>Data set: ";
     for ( var i=0; i<dataset.length; i++ ) {
