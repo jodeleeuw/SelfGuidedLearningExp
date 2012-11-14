@@ -251,7 +251,7 @@ function getDataset( relation, min, max ) {
         var length = 5 + Math.floor(Math.random()*5);
         var dataset = [];
         for ( var i=0; i<length; i++ ) {
-            dataset.push( min + Math.floor( Math.random()*(max-min+1) ) );
+            dataset.push( randRange(min,max) );
         }
         var result = "<p>Data set: ";
         for ( var i=0; i<dataset.length; i++ ) {
@@ -275,6 +275,7 @@ function modifyAndStringifyDataset( ds, min, max ) {
     }
     if ( changetype=="remove" ) {
         var del_idxs = randomSubsetIdxs( ds, 1+Math.floor(Math.random()*3) );
+        var sing_plu = Number( del_idxs.length > 1 );
         var arr=[]; var txt="";
         txt = "<p>Data set: ";
         for ( var i=0; i<ds.length; i++ ) {
@@ -286,13 +287,14 @@ function modifyAndStringifyDataset( ds, min, max ) {
             }
         }
         txt = txt.substring(0,txt.length-2) + "</p>";
-        txt += ["<p>(The number ","<p>(The numbers "][Number(del_idxs.length>1)];
+        txt += ["<p>(The number ","<p>(The numbers "][ sing_plu ];
         for ( var i=0; i<ds.length; i++ ) {
             if ( del_idxs.indexOf(i)>-1 ) {
                 txt += ds[i] + ", ";
             }
         }
-        txt = txt.substring(0,txt.length-2) + [" was"," were"][Number(del_idxs.length>1)] + " removed from the data.)</p>";
+        txt = txt.substring(0,txt.length-2);
+        txt += [" was removed from the data.)</p>"," were removed from the data.)</p>"][ sing_plu ];
     } else if ( changetype=="add" ) {
         var arr=[]; var txt="";
         txt = "<p>Data set: ";
@@ -301,43 +303,31 @@ function modifyAndStringifyDataset( ds, min, max ) {
             txt += ds[i] + ", ";
         }
         var ins_num = 1+Math.floor(Math.random()*2);
+        var sing_plu = Number( ins_num > 1 );
         var els=[];
         for ( var i=0; i<ins_num; i++ ) {
-            els.push( min+(Math.floor(Math.random()*(max-min+1))) );
+            els.push( randRange(min,max) );
             arr.push(els[i]);
             txt += "<ins>" + els[i] + "</ins>, ";
         }
         txt = txt.substring(0,txt.length-2) + "</p>";
         txt = txt.substring(0,txt.length-2) + "</p>";
-        txt += ["<p>(The number ","<p>(The numbers "][Number(els.length>1)];
+        txt += ["<p>(The number ","<p>(The numbers "][ sing_plu ];
         for ( var i=0; i<els.length; i++ ) {
             txt += els[i] + ", ";
         }
-        txt = txt.substring(0,txt.length-2) + [" was"," were"][Number(els.length>1)] + " added to the data.)</p>";
+        txt = txt.substring(0,txt.length-2);
+        txt += [" was added to the data.)</p>"," were added to the data.)</p>"][ sing_plu ];
     }
     return { "array": arr, "text": txt };
 }
-
-// randomSubset: return subset containing n of a's indices
-function randomSubsetIdxs( a, n ) {
-    var ids = [];
-    for ( var i=0; i<a.length; i++ ) {
-        ids.push(i);
-    }
-    return shuffle(ids).slice(0,n);
-}
-
-function shuffle(o) { //v1.0
-	for(var j, x, i = o.length; i; j = parseInt(Math.random() * i), x = o[--i], o[i] = o[j], o[j] = x);
-	return o;
-};
 
 function getButtonOptions() {
     var options = [];
     if ( this.condition=="RR" ) {
         // related within and between categories
         for ( var i=0; i<this.categories.length; i++ ) {
-            if ( this.completes_rct[i]>0 ) {
+            if ( i==this.cat_idx ) {
                 options.push( "Find the <em>" + this.categories[i] + "</em> for a <em>new</em> set of data." );
             } else {
                 options.push( "Find the <em>" + this.categories[i] + "</em> for the <em>same</em> set of data." );
@@ -413,3 +403,25 @@ function getCentTend( dataset, measure, precision ) {
     return Math.round(result*Math.pow(10,precision))/Math.pow(10,precision);
 }
 
+//////////////////////////////////////////////////////////////////////
+// utilities
+//////////////////////////////////////////////////////////////////////
+
+// randomSubset: return subset containing n of a's indices
+function randomSubsetIdxs( a, n ) {
+    var ids = [];
+    for ( var i=0; i<a.length; i++ ) {
+        ids.push(i);
+    }
+    return shuffle(ids).slice(0,n);
+}
+
+function shuffle(o) { //v1.0
+	for(var j, x, i = o.length; i; j = parseInt(Math.random() * i), x = o[--i], o[i] = o[j], o[j] = x);
+	return o;
+};
+
+// randRange: return an int between min and max inclusive
+function randRange( min, max ) {
+    return min + Math.floor(Math.random()*(max-min+1));
+}
