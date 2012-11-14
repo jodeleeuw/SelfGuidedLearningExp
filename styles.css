@@ -1,8 +1,12 @@
 p { font-family: 'Palatino Linotype'; font-size: 18px; }
 
-table { font-family: 'Palatino Linotype'; font-size: 18px; }
+table { font-family: 'Palatino Linotype'; font-size: 18px; width: 600px }
 
 em { font-weight: bold; font-style: normal; }
+
+ins { font-weight: bold; font-style: normal; color: green; background-color: yellow; text-decoration: none }
+
+del { font-weight: bold; font-style: normal; color: red; background-color: yellow; text-decoration: line-through }
 
 button { font-family:'Palatino Linotype',sans-serif; font-size:14px; }
 
