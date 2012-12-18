@@ -113,6 +113,9 @@ TBD (Josh?/David): the look of this is pretty primitive right now. I suspect thi
         }
         var feedback_text = "<p>" + trial.feedback[ correct ] + "</p>";
         $('#feedback').html( feedback_text );
+		// add a class to feedback to indicate wherther it is correct or not
+		if(correct) { $('#feedback').addClass('feedback_correct'); } else { $('#feedback').addClass('feedback_incorrect'); }
+		// show feedback and continue options
         $('#feedback').fadeIn(500);
         $('#continue').fadeIn(500);
     } );

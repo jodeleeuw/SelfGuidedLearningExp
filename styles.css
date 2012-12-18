@@ -12,7 +12,10 @@ button { font-family:'Palatino Linotype',sans-serif; font-size:14px; }
 
 #wrapper { width: 600px; margin: 40px auto 0px auto; }
 
-#feedback { border: 1px solid #aaf; background-color: #ddf; padding: 10px; margin-top: 30px; }
+#feedback { padding: 10px; margin-top: 30px; }
+#feedback img { width: 24px; vertical-align: text-top; } 
+.feedback_correct { border: 1px solid #afa; background-color: #dfd; }
+.feedback_incorrect {  border: 1px solid #faa; background-color: #fdd; }
 
 .option_buttons {
     width:120px; height:100px;
