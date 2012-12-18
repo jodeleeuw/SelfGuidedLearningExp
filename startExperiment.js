@@ -92,12 +92,10 @@ function doTrial( display_loc, callback ) {
 TBD (Josh?/David): the look of this is pretty primitive right now. I suspect this can be solved with css but I don't know from css - can Josh help with this?
 */
     display_loc.html( 
-        '<div id="wrapper">' +
         '<div id="question"><p>' + trial.question + '</p></div>' +
         '<div id="answer"><p><input type="text" id="answer_box"></input><button type="button" id="answer_button">Show the answer</button></p></div>' +
         '<div id="feedback"></div>' +
-        '<div id="continue"><p>Choose the next problem:</p><p>' + option_buttons + '</p></div>' +
-        '</div>'
+        '<div id="continue"><p>Choose the next problem:</p><p>' + option_buttons + '</p></div>'
     );
     $('.option_buttons').click( function() { returnResult(Number(this.id.replace("option_button_",""))); } );
     // hide feedback and submit buttons until user clicks answer_button
