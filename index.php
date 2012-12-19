@@ -189,13 +189,30 @@ $.ajax({
 		{
 			// they have seen consent form
 			// resume from where they left off?
-			start();
+			
+			restore_progress();
+			
+			//start();
 		} else {
 			// show consent form
 			show_consent_form();
 		}
 	}
 });
+
+function restore_progress(){
+	$.ajax({
+	type: 'post',
+	cache: false,
+	url: 'restore_progress.php',
+	data: {"subjid": sid},
+	success: function(data) { 
+		// trial_data will contain an array with each element representing the trial
+		// data can be accessed by name, i.e. trial_data[0].correct will indicate whether the first trial was correct or not.
+		var trial_data = JSON.parse(data);
+	}
+});
+}
 
 function show_consent_form() {
 	$("#welcome").html(
