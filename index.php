@@ -79,9 +79,9 @@ if(isset($_SESSION['user'])){
 		}
 	} elseif($studentid == -2) {
 		// there was a problem with the mysql database
-		echo 'db problem';
+		//echo 'db problem';
 	} else {
-		echo 'Student ID: '.$studentid;		
+		//echo 'Student ID: '.$studentid;		
 	}
 	
 	$_SESSION['studentid'] = $studentid;
@@ -189,6 +189,7 @@ $.ajax({
 		{
 			// they have seen consent form
 			// resume from where they left off?
+			start();
 		} else {
 			// show consent form
 			show_consent_form();
