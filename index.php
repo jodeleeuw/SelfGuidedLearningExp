@@ -159,11 +159,14 @@ function assignCondition($studentid, $condition)
 </head>
 <body>
 <div id="wrapper">
-	<h1>Welcome to the Self-Guided Learning Experiment</h1>
-	<p>Here's some information about completing the study and what you have to do.
-	Here's some information about completing the study and what you have to do.
-	Here's some information about completing the study and what you have to do.
-	Here's some information about completing the study and what you have to do.</p>
+	<div id="welcome">
+		<h1>Welcome to the Self-Guided Learning Experiment</h1>
+		<p>Here's some information about completing the study and what you have to do.
+		Here's some information about completing the study and what you have to do.
+		Here's some information about completing the study and what you have to do.
+		Here's some information about completing the study and what you have to do.</p>
+		<button id="startbtn" type="button">Start</button>
+	</div>
 	<div id="target">
 	</div>
 </div>
@@ -177,6 +180,11 @@ var trial_generator = new TrialGenerator( "RR", false );
 // UR: unrelated within, related between categories
 // UU: unrelated within and between categories
 var prepend_data = { "subjid": Math.floor(1000*Math.random(1000)) };
-//startExperiment( display_loc, prepend_data, trial_generator );
+
+// start experiment
+$("#startbtn").click(function(){
+	$("#welcome").hide();
+	startExperiment( display_loc, prepend_data, trial_generator );
+});
 </script>
 </html>
