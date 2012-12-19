@@ -83,6 +83,8 @@ if(isset($_SESSION['user'])){
 	} else {
 		echo 'Student ID: '.$studentid;		
 	}
+	
+	$_SESSION['studentid'] = $studentid;
 }
 
 function checkSID($username) {
@@ -160,31 +162,82 @@ function assignCondition($studentid, $condition)
 <body>
 <div id="wrapper">
 	<div id="welcome">
-		<h1>Welcome to the Self-Guided Learning Experiment</h1>
-		<p>Here's some information about completing the study and what you have to do.
-		Here's some information about completing the study and what you have to do.
-		Here's some information about completing the study and what you have to do.
-		Here's some information about completing the study and what you have to do.</p>
-		<button id="startbtn" type="button">Start</button>
-	</div>
-	<div id="target">
+		
 	</div>
 </div>
 </body>
 <script type="text/javascript">
-var display_loc = $('#target');
+var sid = <?php echo $_SESSION['studentid']; ?>;
+
 var trial_generator = new TrialGenerator( "RR", false );
 // change the first arg to the TrialGenerator constructor to see different conditions
 // RR: related within and between categories
 // RU: related within, unrelated between categories
 // UR: unrelated within, related between categories
 // UU: unrelated within and between categories
-var prepend_data = { "subjid": Math.floor(1000*Math.random(1000)) };
+var prepend_data = { "subjid": sid };
 
-// start experiment
-$("#startbtn").click(function(){
-	$("#welcome").hide();
-	startExperiment( display_loc, prepend_data, trial_generator );
+
+// check if they already have seen consent form
+$.ajax({
+	type: 'post',
+	cache: false,
+	url: 'check_consent.php',
+	data: {"subjid": sid},
+	success: function(data) { 
+		if(data==1)
+		{
+			// they have seen consent form
+			// resume from where they left off?
+		} else {
+			// show consent form
+			show_consent_form();
+		}
+	}
 });
+
+function show_consent_form() {
+	$("#welcome").html(
+		'<h1>Welcome to the Self-Guided Learning Experiment</h1>\
+		<p>Before starting, you need to decide whether or not you give your consent to have your data analyzed for research purposes.\
+		You will need to complete the experiment in order to receive credit for completing the homework assignment, but you may choose whether \
+		or not your data are analyzed for research purposes.</p> \
+		<button id="startbtn" type="button">View Consent Form</button>'
+	);
+
+	// consent
+	$("#startbtn").click(function(){
+
+		$("#welcome").hide();
+		
+		// TODO: see if they have already seen the consent form, and skip if they have.
+		$("#wrapper").load("consent_form.html" + "?time=" + (new Date().getTime()), function(){
+			// what to do after loading
+			$("#wrapper").append('<button type="button" id="consentBtn">Start Experiment</button>');
+			$("#consentBtn").click(function(){
+				// check to see if they gave consent
+				var consent = $("#consent_checkbox").is(':checked');
+				var data = [[{"sid": sid, "consent_given": consent}]];
+				
+				// write their choice to the database
+				$.ajax({
+					type: 'post',
+					cache: false,
+					url: 'submit_data_mysql.php',
+					data: {"table": "consent", "json": JSON.stringify(data)},
+					success: function(data) { start(); }
+				});
+			});
+		});
+		
+	});
+}
+
+// starting experiment
+function start() {
+	$("#wrapper").html('<div id="target"></div>');
+	var display_loc = $("#target");
+	startExperiment( display_loc, prepend_data, trial_generator );
+}
 </script>
 </html>
