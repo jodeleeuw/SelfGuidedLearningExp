@@ -24,26 +24,26 @@ function runExperiment( display_loc, prepend_data, trial_generator, iter_num, op
             if ( data.option_text=="Quit" ) {
                 endExperiment( display_loc, accum_data );
             } else {
-                $.ajax( { type: 'post', cache: false, url: 'record_data.php',
-/*
-TBD (Josh?): record_data.php
-*/
-                          data: { 'json': JSON.stringify( data ) },
-                          success: function() {
-                            runExperiment( display_loc, prepend_data, trial_generator, iter_num+1, data.option_text, accum_data );
-/*
-I thought using a recursive call was the best way to handle saving data via php after each iteration of doTrial. However, it has the drawback that we'll use a lot of memory (I think) if there are a large number of iterations. Is this likely to be a problem? Removing the accum_data param would certainly reduce the problem and it serves mainly a cosmetic function at the moment.
-*/
-                          },
-                          error: function() {
-                            runExperiment( display_loc, prepend_data, trial_generator, iter_num+1, data.option_text, accum_data );
+                $.ajax({ 
+					type: 'post', 
+					cache: false, 
+					url: 'submit_data_mysql.php',
+					data: { 'table':'trialdata', 'json': JSON.stringify([[data]] ) },
+                    success: function(d) {
+						console.log(d)
+						runExperiment( display_loc, prepend_data, trial_generator, iter_num+1, data.opt_text, accum_data );
+					},
+					error: function(d) {
+						console.log(d);
+						runExperiment( display_loc, prepend_data, trial_generator, iter_num+1, data.opt_text, accum_data );
 /*
 TBD (David): eventually something useful should happen on error, but at least now it will run without record_data.php
 */
-                          }
-                        } );
+                    }
+                } );
             }
-        } );
+        } 
+	);
 }
 
 // endExperiment(): records completion data and displays completion message
@@ -85,7 +85,7 @@ function doTrial( display_loc, callback ) {
         display_loc.html('');
         // pause?
         callback($.extend({},trial.data,
-            {"rt":(new Date()).getTime()-start_time,"response":response,"option":i,"option_text":trial.options[i]}));
+            {"rt":(new Date()).getTime()-start_time,"response":response,"opt":i,"opt_text":trial.options[i]}));
     }
     // post html to display_loc
 /*
