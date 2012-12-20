@@ -210,11 +210,13 @@ function restore_progress(){
 		// trial_data will contain an array with each element representing the trial
 		// data can be accessed by name, i.e. trial_data[0].correct will indicate whether the first trial was correct or not.
 		var trial_data = JSON.parse(data);
+		start();
 	},
 	error: function(){
 		// this likely means that they did not complete any trials, and therefore should start from scratch.
 		// TODO.
-	});
+		start();
+	}});
 }
 
 function show_consent_form() {
