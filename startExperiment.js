@@ -150,7 +150,7 @@ TBD (Paulo/David): the story content below is just a placeholder. Eventually tri
     this.condition    = condition;
     this.getNextTrial = getNextTrial;
     this.getButtonOptions = getButtonOptions;
-    this.getDataset   = getDataset;
+    this.getNewDataset   = getNewDataset;
     this.getProgressBar = getProgressBar;
 }
 
@@ -206,10 +206,10 @@ function getNextTrial( option_text ) {
     var story       = this.stories[this.story_idx];
     var cat         = this.categories[this.cat_idx];
     var storytxt    = "<p>" + story.text + "</p>";
-    var datatxt     = this.getDataset(data_rel,story.min,story.max);
-    var questxt     = "<p>Find the <em>" + cat + "</em> of the " + story.ques + ". (Round off to 2 decimal places.)</p>";
+    var datatxt     = this.getNewDataset(data_rel,story.min,story.max);
+    var questxt     = "<p>Find the <em>" + cat + "</em> of the " + story.ques + ".</p>";
     var content     = progbar + storytxt + datatxt + questxt;
-    var answer      = getCentTend(this.dataset,cat,2);
+    var answer      = getCentTend(this.dataset,cat);
     var feedback    = { false: "<img src='small-red-x-mark-th.png'>  " + " Oops, that's not correct. The " + cat + " is " + answer + ".",
                         true: "<img src='small-green-check-mark-th.png'>  " + " Yes, that's correct!" };
                     // do we need to give more explanation in the case of wrong answers?
@@ -230,96 +230,131 @@ function getProgressBar() {
     return bar;
 }
 
-// generateData: method of TrialGenerator object
-//  generates a new data set, records it in the TrialGenerator, and returns an HTML version thereof
+// getNewDataset: method of TrialGenerator object
+//  generates a new data set, records it in the TrialGenerator's dataset property, and returns an HTML text version thereof
 //  if relation is random, new data is completely random within constraints of current value of this.story
 //  if relation is identical, new data is same as old data
 //  if relation is related, new data is a tweak of old data with changes highlighted in the HTML
-function getDataset( relation, min, max ) {
-    // "relation" currently does not work.
-    if ( relation=="identical" ) {
+function getNewDataset( relation, min, max ) {
+    if ( relation=="random" ) {
+        var dataset = generateDataset( min, max );
+        var result  = stringifyDataset( dataset );
+    } else if ( relation=="identical" ) {
         var dataset = this.dataset;
-        var result = "<p>Data set: ";
-        for ( var i=0; i<dataset.length; i++ ) {
-            result += dataset[i] + ", ";
-        }
-        result = result.substring(0,result.length-2) + "</p>";
+        var result  = stringifyDataset( dataset );
     } else if ( relation=="related" ) {
         var R   = modifyAndStringifyDataset( this.dataset, min, max );
         dataset = R["array"];
         result  = R["text"];
-    } else if ( relation=="random" ) {
-        var length = 5 + Math.floor(Math.random()*5);
-        var dataset = [];
-        for ( var i=0; i<length; i++ ) {
-            dataset.push( randRange(min,max) );
-        }
-        var result = "<p>Data set: ";
-        for ( var i=0; i<dataset.length; i++ ) {
-            result += dataset[i] + ", ";
-        }
-        result = result.substring(0,result.length-2) + "</p>";
     }
     this.dataset = dataset;
     return result;
 }
 
-// modifyAndStringifyDataset
+// generateDataset: given a min and max,
+//  generates an array of 5-9 integers between min and max inclusive,
+//  for which isDatasetNice returns true
+function generateDataset( min, max ) {
+    var dataset;
+    var length;
+    do {
+        dataset = [];
+        do {
+            length = 5 + Math.floor(Math.random()*5);
+        } while ((length%2)==0);
+        // we happen to know that isDatasetNice always returns false if length is even,
+        // so we can save time by rejecting these right away even though isDatasetNice would catch them in the end
+        for ( var i=0; i<length; i++ ) {
+            dataset.push( randRange(min,max) );
+        }
+    } while (!isDatasetNice(dataset));
+    return dataset;
+}
+
+// isDatasetNice: given an array of integers, checks whether 
+//  - the mean is an integer,
+//  - the median is well-defined (i.e. no averaging required),
+//  - and the mode is well-defined (i.e. only one "most common" number)
+function isDatasetNice( ds ) {
+    var naughty = (getMean(ds)===false) || (getMedian(ds)===false) || (getMode(ds)===false);
+    return (!naughty);
+}
+
+// stringifyDataset: given an array of integers,
+//  returns an HTML string version of the same
+function stringifyDataset( ds ) {
+    var result = "<p>Data set: ";
+    for ( var i=0; i<ds.length; i++ ) {
+        result += ds[i] + ", ";
+    }
+    result = result.substring(0,result.length-2) + "</p>";
+    return result;
+}
+
+// modifyAndStringifyDataset: given an array of numbers,
+//  adds or removes two numbers to the array and returns
+//  (1) the modified array, and
+//  (2) an HTML text version thereof with changes relative to the original dataset marked and explained
 function modifyAndStringifyDataset( ds, min, max ) {
     var changetype;
     if ( ds.length >= 8 ) {
         changetype = "remove";
-    } else if ( ds.length <= 5 ) {
+    } else if ( ds.length <= 6 ) {
         changetype = "add";
     } else {
         changetype = ["remove","add"][Math.floor(Math.random()*2)];
     }
-    if ( changetype=="remove" ) {
-        var del_idxs = randomSubsetIdxs( ds, 1+Math.floor(Math.random()*3) );
-        var sing_plu = Number( del_idxs.length > 1 );
-        var arr=[]; var txt="";
-        txt = "<p>Data set: ";
-        for ( var i=0; i<ds.length; i++ ) {
-            if ( del_idxs.indexOf(i)>-1 ) {
-                txt += "<del>" + ds[i] + "</del>, ";
-            } else {
+    var del_num=2;
+    var ins_num=2;
+    var del_idxs;
+    var arr;
+    var txt;
+    var els;
+    do {
+        if ( changetype=="remove" ) {
+            del_idxs = randomSubsetIdxs( ds, del_num );
+            arr = [];
+            txt = "<p>Data set: ";
+            for ( var i=0; i<ds.length; i++ ) {
+                if ( del_idxs.indexOf(i)>-1 ) {
+                    txt += "<del>" + ds[i] + "</del>, ";
+                } else {
+                    arr.push(ds[i]);
+                    txt += ds[i] + ", ";
+                }
+            }
+            txt = txt.substring(0,txt.length-2) + "</p>";
+            txt += "<p>(The numbers ";
+            for ( var i=0; i<ds.length; i++ ) {
+                if ( del_idxs.indexOf(i)>-1 ) {
+                    txt += ds[i] + ", ";
+                }
+            }
+            txt = txt.substring(0,txt.length-2);
+            txt += " were removed from the data.)</p>";
+        } else if ( changetype=="add" ) {
+            arr = [];
+            txt = "<p>Data set: ";
+            for ( var i=0; i<ds.length; i++ ) {
                 arr.push(ds[i]);
                 txt += ds[i] + ", ";
             }
-        }
-        txt = txt.substring(0,txt.length-2) + "</p>";
-        txt += ["<p>(The number ","<p>(The numbers "][ sing_plu ];
-        for ( var i=0; i<ds.length; i++ ) {
-            if ( del_idxs.indexOf(i)>-1 ) {
-                txt += ds[i] + ", ";
+            els=[];
+            for ( var i=0; i<ins_num; i++ ) {
+                els.push( randRange(min,max) );
+                arr.push(els[i]);
+                txt += "<ins>" + els[i] + "</ins>, ";
             }
+            txt = txt.substring(0,txt.length-2) + "</p>";
+            txt = txt.substring(0,txt.length-2) + "</p>";
+            txt += "<p>(The numbers ";
+            for ( var i=0; i<els.length; i++ ) {
+                txt += els[i] + ", ";
+            }
+            txt = txt.substring(0,txt.length-2);
+            txt += " were added to the data.)</p>";
         }
-        txt = txt.substring(0,txt.length-2);
-        txt += [" was removed from the data.)</p>"," were removed from the data.)</p>"][ sing_plu ];
-    } else if ( changetype=="add" ) {
-        var arr=[]; var txt="";
-        txt = "<p>Data set: ";
-        for ( var i=0; i<ds.length; i++ ) {
-            arr.push(ds[i]);
-            txt += ds[i] + ", ";
-        }
-        var ins_num = 1+Math.floor(Math.random()*2);
-        var sing_plu = Number( ins_num > 1 );
-        var els=[];
-        for ( var i=0; i<ins_num; i++ ) {
-            els.push( randRange(min,max) );
-            arr.push(els[i]);
-            txt += "<ins>" + els[i] + "</ins>, ";
-        }
-        txt = txt.substring(0,txt.length-2) + "</p>";
-        txt = txt.substring(0,txt.length-2) + "</p>";
-        txt += ["<p>(The number ","<p>(The numbers "][ sing_plu ];
-        for ( var i=0; i<els.length; i++ ) {
-            txt += els[i] + ", ";
-        }
-        txt = txt.substring(0,txt.length-2);
-        txt += [" was added to the data.)</p>"," were added to the data.)</p>"][ sing_plu ];
-    }
+    } while (!isDatasetNice(arr));
     return { "array": arr, "text": txt };
 }
 
@@ -368,22 +403,54 @@ function getButtonOptions() {
     return options;
 }
 
-function getCentTend( dataset, measure, precision ) {
+function getCentTend( dataset, measure ) {
     if ( measure=="Mean" ) {
-        var result = dataset.reduce( function(a,b){return Number(a)+Number(b);} )/dataset.length;
+        return getMean( dataset );
     } else if ( measure=="Median" ) {
-        var sorted = (dataset.slice()).sort();
-        if ( (dataset.length%2)==1 ) {
-            var result = sorted[(sorted.length-1)/2];
-        } else {
-            var result = ( sorted[sorted.length/2] + sorted[(sorted.length/2)-1] ) / 2;
-        }
+        return getMedian( dataset );
     } else if ( measure=="Mode" ) {
+        return getMode( dataset );
+    }
+}
+
+//////////////////////////////////////////////////////////////////////
+// utilities
+//////////////////////////////////////////////////////////////////////
+
+// getMean( a ): return the integer mean of an array of numbers, or false if the mean is not an integer
+function getMean(a) {
+    if (a.length==0) {
+        return false;
+    } else {
+        var m = a.reduce( function(a,b){return Number(a)+Number(b);} )/a.length;
+        if ( m == Math.floor(m) ) {
+            return m;
+        } else {
+            return false;
+        }
+    }
+}
+
+// getMedian( a ): return the median of an array of numbers, or false if the array has an even number of numbers
+function getMedian(a) {
+    if (((a.length)%2)==0) {
+        return false;
+    } else {
+        var sorted = (a.slice()).sort(function(a,b){return a-b});
+        return sorted[ (sorted.length-1)/2 ];
+    }
+}
+
+// getMode( a ): return the mode of an array of numbers, or false if there is more than one mode, or the array is empty
+function getMode(a) {
+    if (a.length==0) {
+        return false;
+    } else {
         var freqs = {};
         var max_freq = 0;
         var el;
-        for ( var i=0; i<dataset.length; i++ ) {
-            el = dataset[i];
+        for ( var i=0; i<a.length; i++ ) {
+            el = a[i];
             if ( freqs[el]!=undefined ) {
                 freqs[el]++;
             } else {
@@ -399,14 +466,13 @@ function getCentTend( dataset, measure, precision ) {
                 modal_els.push( k );
             }
         }
-        var result = modal_els.reduce( function(a,b){return Number(a)+Number(b);} )/modal_els.length;
+        if ( modal_els.length > 1 ) {
+            return false;
+        } else {
+            return modal_els[0];
+        }
     }
-    return Math.round(result*Math.pow(10,precision))/Math.pow(10,precision);
 }
-
-//////////////////////////////////////////////////////////////////////
-// utilities
-//////////////////////////////////////////////////////////////////////
 
 // randomSubset: return subset containing n of a's indices
 function randomSubsetIdxs( a, n ) {
