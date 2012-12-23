@@ -110,11 +110,14 @@ function doTrial( display_loc, callback ) {
     );
     // disable answer_button until answer_field is filled
     $('#answer_button').attr('disabled','disabled');
-    $('#answer_box').keyup( function() {
+    $('#answer_box').keyup( function(e) {
         if ( $('#answer_box').val()==="" ) {
             $('#answer_button').attr('disabled','disabled');
         } else {
             $('#answer_button').removeAttr('disabled');
+            if (e.keyCode==13) {    // enter key
+                $('#answer_button').click();
+            }
         }
     } );
     // hide option prompt and buttons until user clicks answer_button
@@ -202,6 +205,17 @@ function getNextTrial( option_text ) {
         }
     }
     
+    // generate actual HTML content to be shown to participant, except option buttons (see below)
+    var progbar     = this.getProgressBar();
+    var story       = this.stories[this.story_idx];
+    var cat         = this.categories[this.cat_idx];
+    var storytxt    = "<p>" + story.text + "</p>";
+    var datatxt     = this.getNewDataset(data_rel,story.min,story.max);
+    var questxt     = "<p>Find the <em>" + cat + "</em> of the " + story.ques + ".</p>";
+    var content     = progbar + storytxt + datatxt + questxt;
+    var answer      = getCentTend(this.dataset,cat);
+    var feedback    = getFeedback(this.dataset,cat);
+    
     // modify the record of cats completed total and since last change of story or data set
     if ( new_cyc ) {    // we are changing story or data set
         for ( var i=0; i<this.categories.length; i++ ) {
@@ -221,16 +235,9 @@ function getNextTrial( option_text ) {
         }
     }
             
-    // generate actual HTML content to be shown to participant
-    var progbar     = this.getProgressBar();
-    var story       = this.stories[this.story_idx];
-    var cat         = this.categories[this.cat_idx];
-    var storytxt    = "<p>" + story.text + "</p>";
-    var datatxt     = this.getNewDataset(data_rel,story.min,story.max);
-    var questxt     = "<p>Find the <em>" + cat + "</em> of the " + story.ques + ".</p>";
-    var content     = progbar + storytxt + datatxt + questxt;
-    var answer      = getCentTend(this.dataset,cat);
-    var feedback    = getFeedback(this.dataset,cat);
+    // option buttons are generated AFTER updating the above info, so that they will reflect the current trial
+    // i.e. quit will be available if the current trial will complete the necessary minimums for the categories,
+    // and the options will say same story or different story, etc., according to what it should be after this trial is completed
     var options     = this.getButtonOptions();
     
     // generate data to be recorded (as opposed to above "dataset" which is what is displayed to participant) and return trial specification
@@ -429,7 +436,6 @@ function getButtonOptions() {
 //  returns whether the same or a different category was chosen
 //  and whether a similar or different dataset was chosen
 function getOptionProperties( category, option_text ) {
-    alert( option_text + " " + category + " " + option_text.indexOf( category ) );
     var option_type;
     if ( option_text=="Quit" ) {
         option_type = "NA"
