@@ -85,7 +85,7 @@ function doTrial( display_loc, callback ) {
         // pause?
         callback($.extend({},trial.data,
             {"response":response,"correct":correct,"rt":(new Date()).getTime()-start_time,"option":i,"option_text":trial.options[i]},
-            getOptionProperties( trial.category, trial.options[i] ) ) );
+            extractDataFromOptionText( trial.category, trial.options[i] ) ) );
     }
     // content that will go into the page
     var question_text   = trial.question;
@@ -152,6 +152,12 @@ function doTrial( display_loc, callback ) {
 
 TrialGenerator = function( condition, items ) {
 /*
+David 2012.12.23
+condition no longer does anything because we have changed experimental design so that there is no manipulation.
+however, I am leaving the parameter there so that function calls which rely on it will not be screwed up.
+eventually we should get rid of it.
+*/
+/*
 TBD (Paulo/David): the story content below is just a placeholder. Eventually trialspecs should be instantiated using content passed in via the items param. We should ensure that the number of stories and is the same for each category. We should have enough stories that people are unlikely to exhaust them, but if people do, the code will respond gracefully by looping back to the beginning.
 */
     this.stories    = [ 
@@ -170,38 +176,32 @@ TBD (Paulo/David): the story content below is just a placeholder. Eventually tri
     this.curr_cat_idx   = 0;        // index of category for the first example to be shown
     this.curr_story_idx = 0;        // index of story for the first example to be shown
 */
-    this.condition    = condition;
-    this.getNextTrial = getNextTrial;
-    this.getButtonOptions = getButtonOptions;
-    this.getNewDataset   = getNewDataset;
-    this.getProgressBar = getProgressBar;
+    this.condition          = condition;
+    this.getNextTrial       = getNextTrial;
+    this.getOptionsText     = getOptionsText;
+    this.getNewDataset      = getNewDataset;
+    this.getProgressBar     = getProgressBar;
 }
 
 function getNextTrial( option_text ) {
     // determine trial params: category index, story index, and relation of new dataset to previous dataset
-    var data_rel; var new_cyc=false;
+    var data_rel;
     if ( option_text=="first trial" ) {
         this.cat_idx    = 0;
         this.story_idx  = 0;
         data_rel        = "random";
-        new_cyc         = true;
     } else {
-        var opt = option_text.replace( /<\/{0,}em>/g, "" );
+        var cat = extractCategoryFromOptionText( option_text );
         for ( var i=0; i<this.categories.length; i++ ) {
-            if ( opt.indexOf( this.categories[i] )!=-1 ) {
+            if ( this.categories[i]==cat ) {
                 this.cat_idx = i;
-                break;
             }
         }
-        if ( opt.indexOf( "new story problem" )!=-1 ) {
+        var data_rel = extractRelationFromOptionText( option_text );
+        if ( data_rel=="random" ) {
+            // in this case, we are starting a new story problem, so increment the story index
+            // this is a hack - it relies on knowledge that the data relation is random iff we start a new story problem
             this.story_idx = (this.story_idx + 1)%(this.stories.length);
-            data_rel = "random";
-            new_cyc = true;
-        } else if ( opt.indexOf( "new set of data" )!=-1 ) {
-            data_rel = "related";
-            new_cyc = true;
-        } else {
-            data_rel = "identical";
         }
     }
     
@@ -217,7 +217,9 @@ function getNextTrial( option_text ) {
     var feedback    = getFeedback(this.dataset,cat);
     
     // modify the record of cats completed total and since last change of story or data set
-    if ( new_cyc ) {    // we are changing story or data set
+    if ( (data_rel=="modified") || (data_rel=="random") ) {
+        // in either of these cases, we are changing data set,
+        // so set the completes since last change to 0 for everything but the current category and 1 for the current category
         for ( var i=0; i<this.categories.length; i++ ) {
             if ( i==this.cat_idx ) {
                 this.completes_tot[i]++;
@@ -226,7 +228,9 @@ function getNextTrial( option_text ) {
                 this.completes_rct[i]=0;
             }
         }
-    } else {            // we are not changing story or data set
+    } else {
+        // in this case, we are not changing story or data set,
+        // so increment the completes since last change for the current category and leave others unchanged
         for ( var i=0; i<this.categories.length; i++ ) {
             if ( i==this.cat_idx ) {
                 this.completes_tot[i]++;
@@ -238,7 +242,7 @@ function getNextTrial( option_text ) {
     // option buttons are generated AFTER updating the above info, so that they will reflect the current trial
     // i.e. quit will be available if the current trial will complete the necessary minimums for the categories,
     // and the options will say same story or different story, etc., according to what it should be after this trial is completed
-    var options     = this.getButtonOptions();
+    var options     = this.getOptionsText();
     
     // generate data to be recorded (as opposed to above "dataset" which is what is displayed to participant) and return trial specification
     // once we have more realistic content, we should add more detailed data, e.g. the actual correct answer.
@@ -267,7 +271,7 @@ function getNewDataset( relation, min, max ) {
     } else if ( relation=="identical" ) {
         var dataset = this.dataset;
         var result  = stringifyDataset( dataset );
-    } else if ( relation=="related" ) {
+    } else if ( relation=="modified" ) {
         var R   = modifyAndStringifyDataset( this.dataset, min, max );
         dataset = R["array"];
         result  = R["text"];
@@ -383,44 +387,27 @@ function modifyAndStringifyDataset( ds, min, max ) {
     return { "array": arr, "text": txt };
 }
 
-// getButtonOptions: method of TrialGenerator object
+// getOptionsText: method of TrialGenerator object
 //  provides an array of HTML strings with the appropriate text for the option buttons which should appear on the present trial
 //  includes a "Quit" button iff participant has already completed the minimum number of questions in each category
-function getButtonOptions() {
+
+/* this isn't quite right, because it allows you to keep the same data for same measure by switching back and forth */
+
+function getOptionsText() {
     var options = [];
-    if ( this.condition=="RR" ) {
-        // related within and between categories
-        for ( var i=0; i<this.categories.length; i++ ) {
-            if ( i==this.cat_idx ) {
-                options.push( "Find the <em>" + this.categories[i] + "</em> for a <em>new</em> set of data." );
-            } else {
-                options.push( "Find the <em>" + this.categories[i] + "</em> for the <em>same</em> set of data." );
-            }
-        }
-    } else if ( this.condition=="RU" ) {
-        // related within, unrelated between categories
-        for ( var i=0; i<this.categories.length; i++ ) {
-            if ( i==this.cat_idx ) {
-                options.push( "Find the <em>" + this.categories[i] + "</em> for a new <em>set of data</em>." );
-            } else {
-                options.push( "Find the <em>" + this.categories[i] + "</em> for a new <em>story problem</em>." );
-            }
-        }
-    } else if ( this.condition=="UR" ) {
-        // unrelated within, related between categories
-        for ( var i=0; i<this.categories.length; i++ ) {
-            if ( this.completes_rct[i]>0 ) {
-                options.push( "Find the <em>" + this.categories[i] + "</em> for <em>a new story problem</em>." );
-            } else {
-                options.push( "Find the <em>" + this.categories[i] + "</em> for <em>the same set of data</em>." );
-            }
-        }
-    } else if ( this.condition=="UU" ) {
-        // unrelated within and between categories
-        for ( var i=0; i<this.categories.length; i++ ) {
-            options.push( "Find the <em>" + this.categories[i] + "</em> for a new story problem." );
+    // options for "related" data sets
+    for ( var i=0; i<this.categories.length; i++ ) {
+        if ( this.completes_rct[i]>0 ) {
+            options.push( "Find the <em>" + this.categories[i] + "</em> for a <em>modified set of data</em>." );
+        } else {
+            options.push( "Find the <em>" + this.categories[i] + "</em> for the <em>same set of data</em>." );
         }
     }
+    // options for "unrelated" data sets
+    for ( var i=0; i<this.categories.length; i++ ) {
+        options.push( "Find the <em>" + this.categories[i] + "</em> for a <em>different story problem</em>." );
+    }
+    // quit option, if applicable
     var quit_avail = true;
     for ( var i=0; i<this.categories.length; i++ ) {
         quit_avail = quit_avail && ( this.completes_tot[i]>=this.complete_targ );
@@ -431,28 +418,56 @@ function getButtonOptions() {
     return options;
 }
 
-// getOptionProperties:
+// extractCategoryFromOptionText
+//  given the text of the button option chosen,
+//  returns the category of the button option
+function extractCategoryFromOptionText( option_text ) {
+    var categories = [ "Mean", "Median", "Mode" ];
+    var result = "NA";
+    for ( var i=0; i<categories.length; i++ ) {
+        if ( option_text.indexOf( categories[i] ) != -1 ) {
+            result = categories[i];
+        }
+    }
+    return result;
+}
+
+// extractRelationFromOptionText
+//  given the text of the button option chosen,
+//  returns the relationship of the next dataset to the present dataset designated in the button
+function extractRelationFromOptionText( option_text ) {
+    var relations = [ "modified set of data", "same set of data", "different story problem" ];
+    var result = "NA";
+    if ( option_text.indexOf( "different story problem" ) != -1 ) {
+        result = "random";
+    } else if ( option_text.indexOf( "same set of data" ) != -1 ) {
+        result = "identical";
+    } else if ( option_text.indexOf( "modified set of data" ) != -1 ) {
+        result = "modified";
+    }
+    return result;
+}
+
+// extractDataFromOptionText:
 //  given the category of a trial and the text of the button option chosen,
 //  returns whether the same or a different category was chosen
 //  and whether a similar or different dataset was chosen
-function getOptionProperties( category, option_text ) {
+function extractDataFromOptionText( category, option_text ) {
     var option_type;
-    if ( option_text=="Quit" ) {
-        option_type = "NA"
-    } else if ( option_text.indexOf( category ) != -1 ) {
-        option_type = "same";
+    var new_category = extractCategoryFromOptionText( option_text );
+    if ( new_category=="NA" ) {
+        option_type = "NA";
     } else {
-        option_type = "different";
+        option_type = [ "different", "same" ][ Number(category==new_category) ];
     }
     var option_similarity;
-    if ( option_text=="Quit" ) {
-        option_type = "NA"
-    } else if ( ( option_text.indexOf( "a new story problem" ) != -1 ) ||
-         ( option_text.indexOf( "a new <em>story problem</em>" ) != -1 ) ||
-         ( option_text.indexOf( "<em>a new story problem</em>." ) != -1 ) ) {
-        option_similarity = "different";
-    } else {
-        option_similarity = "similar";
+    var data_relation = extractRelationFromOptionText( option_text );
+    if ( data_relation=="NA" ) {
+        option_similarity = "NA";
+    } else if ( ( data_relation=="identical" ) || ( data_relation=="modified" ) ) {
+        option_similarity = "related";
+    } else if ( data_relation=="random" ) {
+        option_similarity = "unrelated";
     }
     return { "option_type": option_type, "option_similarity": option_similarity };
 }
