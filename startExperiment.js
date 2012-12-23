@@ -94,6 +94,9 @@ function doTrial( display_loc, callback ) {
     var option_prompt   = 'Choose the next problem:';
     var option_buttons  = '';
     for ( var i=0; i<trial.options.length; i++ ) {
+        if ( i==3 ) { option_buttons += "<br>"; }
+        // the above is a hack which relies on knowing that the option buttons come in sets of 3
+        // I want the options in the second set of 3 to appear below the corresponding ones in the first set
         option_buttons += '<button type="button" class="option_buttons" id="option_button_'+i+'">'+trial.options[i]+'</button>  ';
     }
     // organize content and post to display_loc
