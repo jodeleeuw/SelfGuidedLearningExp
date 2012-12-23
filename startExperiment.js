@@ -31,11 +31,11 @@ function runExperiment( display_loc, prepend_data, trial_generator, iter_num, op
 					data: { 'table':'trialdata', 'json': JSON.stringify([[data]] ) },
                     success: function(d) {
 						console.log(d)
-						runExperiment( display_loc, prepend_data, trial_generator, iter_num+1, data.opt_text, accum_data );
+						runExperiment( display_loc, prepend_data, trial_generator, iter_num+1, data.option_text, accum_data );
 					},
 					error: function(d) {
 						console.log(d);
-						runExperiment( display_loc, prepend_data, trial_generator, iter_num+1, data.opt_text, accum_data );
+						runExperiment( display_loc, prepend_data, trial_generator, iter_num+1, data.option_text, accum_data );
 /*
 TBD (David): eventually something useful should happen on error, but at least now it will run without record_data.php
 */
@@ -61,7 +61,8 @@ function endExperiment( display_loc, accum_data ) {
 //////////////////////////////////////////////////////////////////////
 
 // TrialSpec class
-TrialSpec = function( question, answer, feedback, options, data ) {
+TrialSpec = function( category, question, answer, feedback, options, data ) {
+    this.category   = category;
     this.question   = question;
     this.answer     = answer;
     this.feedback   = feedback;
@@ -72,53 +73,72 @@ TrialSpec = function( question, answer, feedback, options, data ) {
 
 // doTrial()
 //  display this.text and this.question in display_loc, plus an area for text entry and a button
-//  when button is clicked, disappear it, display feedback and buttons based on this.options plus a quit button
+//  button is disabled until something is entered into the text entry area
+//  when button is clicked, disappear it, display feedback and buttons based on this.options
 //  when one of these is clicked, return result object including this.data, user input data, and which button was clicked
 function doTrial( display_loc, callback ) {
     var trial = this;
-    // generate continue buttons and function for them to call on click
-    var option_buttons = '';
-    for ( var i=0; i<trial.options.length; i++ ) {
-        option_buttons += '<button type="button" class="option_buttons" id="option_button_'+i+'">'+trial.options[i]+'</button>  ';
-    }
+    var response;
+    var correct;
     var returnResult = function( i ) {
         display_loc.html('');
         // pause?
         callback($.extend({},trial.data,
-            {"rt":(new Date()).getTime()-start_time,"response":response,"opt":i,"opt_text":trial.options[i]}));
+            {"response":response,"correct":correct,"rt":(new Date()).getTime()-start_time,"option":i,"option_text":trial.options[i]},
+            getOptionProperties( trial.category, trial.options[i] ) ) );
     }
-    // post html to display_loc
-/*
-TBD (Josh?/David): the look of this is pretty primitive right now. I suspect this can be solved with css but I don't know from css - can Josh help with this?
-*/
+    // content that will go into the page
+    var question_text   = trial.question;
+    var answer_field    = '<input type="text" id="answer_box"></input>';
+    var answer_button   = '<button type="button" id="answer_button">Show the answer</button>';
+    var option_prompt   = 'Choose the next problem:';
+    var option_buttons  = '';
+    for ( var i=0; i<trial.options.length; i++ ) {
+        option_buttons += '<button type="button" class="option_buttons" id="option_button_'+i+'">'+trial.options[i]+'</button>  ';
+    }
+    // organize content and post to display_loc
     display_loc.html( 
-        '<div id="question"><p>' + trial.question + '</p></div>' +
-        '<div id="answer"><p><input type="text" id="answer_box"></input><button type="button" id="answer_button">Show the answer</button></p></div>' +
+        '<div id="question"><p>' +
+            question_text + '</p></div>' +
+        '<div id="answer"><p>' +
+            answer_field +
+            answer_button + '</p></div>' +
         '<div id="feedback"></div>' +
-        '<div id="continue"><p>Choose the next problem:</p><p>' + option_buttons + '</p></div>'
+        '<div id="continue">' +
+            '<p>' + option_prompt + '</p>' +
+            '<p>' + option_buttons + '</p></div>'
     );
-    $('.option_buttons').click( function() { returnResult(Number(this.id.replace("option_button_",""))); } );
-    // hide feedback and submit buttons until user clicks answer_button
-    $('#feedback').hide();
+    // disable answer_button until answer_field is filled
+    $('#answer_button').attr('disabled','disabled');
+    $('#answer_box').keyup( function() {
+        if ( $('#answer_box').val()==="" ) {
+            $('#answer_button').attr('disabled','disabled');
+        } else {
+            $('#answer_button').removeAttr('disabled');
+        }
+    } );
+    // hide option prompt and buttons until user clicks answer_button
     $('#continue').hide();
     $('#answer_button').click( function() {
         $('#answer_button').hide();
         response = $('#answer_box').val();
         if ( ( response==="" ) || ( response===undefined ) ) {
-            var correct = false;
+            correct = false;
         } else {
-            var correct = ( (Math.round(response*100)/100)==(Math.round(trial.answer*100)/100) );
+            response = Number( response );
+            correct = ( response==trial.answer );
         }
         var feedback_text = "<p>" + trial.feedback[ correct ] + "</p>";
         $('#feedback').html( feedback_text );
-		// add a class to feedback to indicate wherther it is correct or not
+		// add a class to feedback to indicate whether it is correct or not
 		if(correct) { $('#feedback').addClass('feedback_correct'); } else { $('#feedback').addClass('feedback_incorrect'); }
 		// show feedback and continue options
         $('#feedback').fadeIn(500);
         $('#continue').fadeIn(500);
     } );
+    // set option buttons to return the trial when clicked
+    $('.option_buttons').click( function() { returnResult(Number(this.id.replace("option_button_",""))); } );
     // record start time
-    var response;
     var start_time = (new Date()).getTime();
 }
 
@@ -210,15 +230,13 @@ function getNextTrial( option_text ) {
     var questxt     = "<p>Find the <em>" + cat + "</em> of the " + story.ques + ".</p>";
     var content     = progbar + storytxt + datatxt + questxt;
     var answer      = getCentTend(this.dataset,cat);
-    var feedback    = { false: "<img src='small-red-x-mark-th.png'>  " + " Oops, that's not correct. The " + cat + " is " + answer + ".",
-                        true: "<img src='small-green-check-mark-th.png'>  " + " Yes, that's correct!" };
-                    // do we need to give more explanation in the case of wrong answers?
+    var feedback    = getFeedback(this.dataset,cat);
     var options     = this.getButtonOptions();
     
     // generate data to be recorded (as opposed to above "dataset" which is what is displayed to participant) and return trial specification
     // once we have more realistic content, we should add more detailed data, e.g. the actual correct answer.
-    var data        = {"category":cat,"storyidx":this.story_idx,"dataset":this.dataset.toString()};
-    return new TrialSpec( content, answer, feedback, options, data );
+    var data        = {"storyidx":this.story_idx,"category":cat,"dataset":this.dataset.toString(),"answerkey":answer};
+    return new TrialSpec( cat, content, answer, feedback, options, data );
 }
 
 function getProgressBar() {
@@ -358,6 +376,9 @@ function modifyAndStringifyDataset( ds, min, max ) {
     return { "array": arr, "text": txt };
 }
 
+// getButtonOptions: method of TrialGenerator object
+//  provides an array of HTML strings with the appropriate text for the option buttons which should appear on the present trial
+//  includes a "Quit" button iff participant has already completed the minimum number of questions in each category
 function getButtonOptions() {
     var options = [];
     if ( this.condition=="RR" ) {
@@ -403,6 +424,33 @@ function getButtonOptions() {
     return options;
 }
 
+// getOptionProperties:
+//  given the category of a trial and the text of the button option chosen,
+//  returns whether the same or a different category was chosen
+//  and whether a similar or different dataset was chosen
+function getOptionProperties( category, option_text ) {
+    alert( option_text + " " + category + " " + option_text.indexOf( category ) );
+    var option_type;
+    if ( option_text=="Quit" ) {
+        option_type = "NA"
+    } else if ( option_text.indexOf( category ) != -1 ) {
+        option_type = "same";
+    } else {
+        option_type = "different";
+    }
+    var option_similarity;
+    if ( option_text=="Quit" ) {
+        option_type = "NA"
+    } else if ( ( option_text.indexOf( "a new story problem" ) != -1 ) ||
+         ( option_text.indexOf( "a new <em>story problem</em>" ) != -1 ) ||
+         ( option_text.indexOf( "<em>a new story problem</em>." ) != -1 ) ) {
+        option_similarity = "different";
+    } else {
+        option_similarity = "similar";
+    }
+    return { "option_type": option_type, "option_similarity": option_similarity };
+}
+
 function getCentTend( dataset, measure ) {
     if ( measure=="Mean" ) {
         return getMean( dataset );
@@ -413,16 +461,47 @@ function getCentTend( dataset, measure ) {
     }
 }
 
+function getFeedback( dataset, measure ) {
+    var correct = "<img src='small-green-check-mark-th.png'>  " + " Yes, that's correct!";
+    var incorr  = "<img src='small-red-x-mark-th.png'>  " + " Oops, that's not correct.<br><br>";
+    switch ( measure ) {
+        case "Mean":
+            var s = getSum(dataset);
+            var l = dataset.length;
+            incorr += "The sum of the numbers is " + s + " and there are " + l + " numbers. So the Mean is " + s + "/" + l + "=" + getMean(dataset) + ".";
+            break;
+        case "Median":
+            var sorted = getSorted(dataset);
+            incorr += "If you put the numbers in order, you get " + sorted.toString() + ". Then the Median is just the middle number, which is " + getMedian(dataset) + ".";
+            break;
+        case "Mode":
+            var sorted = getSorted(dataset);
+            var m = getMode(dataset);
+            incorr += "If you put the numbers in order, you get " + sorted.toString() + ". You can see that " + m + " appears " + getFrequency(m,dataset) + " times, more often than any other number. So the Mode is " + m + ".";
+            break;
+    }
+    return { false: incorr, true: correct };
+}
+
 //////////////////////////////////////////////////////////////////////
 // utilities
 //////////////////////////////////////////////////////////////////////
 
-// getMean( a ): return the integer mean of an array of numbers, or false if the mean is not an integer
+// getSum( a ) : return the sum of an array of numbers
+function getSum(a) {
+    if ( a.length==0 ) {
+        return 0;
+    } else {
+        return a.reduce(function(a,b){return Number(a)+Number(b);});
+    }
+}
+
+// getMean( a ) : return the integer mean of an array of numbers, or false if the mean is not an integer
 function getMean(a) {
     if (a.length==0) {
         return false;
     } else {
-        var m = a.reduce( function(a,b){return Number(a)+Number(b);} )/a.length;
+        var m = getSum(a)/a.length;
         if ( m == Math.floor(m) ) {
             return m;
         } else {
@@ -431,17 +510,31 @@ function getMean(a) {
     }
 }
 
-// getMedian( a ): return the median of an array of numbers, or false if the array has an even number of numbers
+// getSorted( a ) : return an array with the same elements as an array of numbers a, sorted from small to large
+function getSorted(a) {
+    return (a.slice()).sort(function(a,b){return a-b});
+}
+
+// getMedian( a ) : return the median of an array of numbers, or false if the array has an even number of numbers
 function getMedian(a) {
     if (((a.length)%2)==0) {
         return false;
     } else {
-        var sorted = (a.slice()).sort(function(a,b){return a-b});
-        return sorted[ (sorted.length-1)/2 ];
+        return getSorted(a)[ (a.length-1)/2 ];
     }
 }
 
-// getMode( a ): return the mode of an array of numbers, or false if there is more than one mode, or the array is empty
+// getFrequency( n, a ) : return the number of times n occurs in a
+function getFrequency(n,a) {
+    var f = 0;
+    for ( var i=0; i<a.length; i++ ) {
+        if (a[i]==n) { f++; }
+    }
+    return f;
+}
+
+// getMode( a ) : return the mode of an array of numbers, or false if there is more than one mode, or the array is empty
+//  eventually rewrite this to use getFrequency, if you have time
 function getMode(a) {
     if (a.length==0) {
         return false;
