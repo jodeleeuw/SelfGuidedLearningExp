@@ -5,14 +5,38 @@
 
 function startExperiment( display_loc, prepend_data, condition ) {
     var pretest_questions = [
-        { "number": 0, "text": "I am a question. Really?", "answers": [ "Yes", "No" ], "key": 0 },
-        { "number": 1, "text": "I am an answer. Really?", "answers": [ "Yes", "No" ], "key": 1 },
-        { "number": 2, "text": "Who's on first?", "answers": [ "Yes", "What", "Josh", "Paulo", "David", "Rob" ], "key": 1 }
+        { "number": 0,
+          "text": "<h1>Test Section</h1><p>In this section, you will take a short multiple choice test about mean, median, and mode.</p><p>The purpose of this test is to find out how much you already know about these concepts. So, please don't use any outside sources (books, friends, internet, calculator).</p><p>This test doesn't count towards your grade, but it's very similar to the test you'll receive later in class, which <strong>will</strong> count towards your grade. So this test is good practice for the real one.</p><p>Click below to start!</p>" },
+        { "number": 1,
+          "text": "<p>1. 5 students in a math class take an exam.  Their scores, out of 10 problems, were: Jane = 8, Frank = 3, Erica = 2, John = 4, Don = 8. What are the median and mean for this data set?</p>",
+          "answers": [ "median = 5, mean = 4", "median = 4, mean = 5", "median = 2, mean = 4", "median = 2, mean = 5" ],
+          "key": 1 },
+        { "number": 2,
+          "text": "<p>2. Imagine a math exam in which 15 students do very well, getting scores of 98, 99, and 100 out of 100 possible points.  However, the remaining 3 students get very poor scores: 5, 8, and 9.  Will the mode be less than or more than the mean?</p>",
+          /* David's note: are we telling them how to calculate the mode in a case like this, where each number only occurs once? */
+          "answers": [ "the mode will be more than the mean", "the mode will be less than the mean", "the mode and mean will be the same", "more information is needed about the particular scores" ],
+          "key": 0 },
+        { "number": 3,
+          "text": "<p>3. Just as in the previous problem, imagine a math exam in which 15 students do very well, getting scores of 98, 99, and 100 out of 100 possible points, while the remaining 3 students get very poor scores: 5, 8, and 9. Which will be higher: the median or the mean?</p>",
+          "answers": [ "the median will be more than the mean", "the median will be less than the mean", "the median and mean will be the same", "more information is needed about the particular scores" ],
+          "key": 0 },
+        { "number": 4,
+          "text": "<p>4. 5 lamps are assessed for their quality by running them through a battery of 10 tests.  Here are the number of tests that each of 5 lamp models passed: Vegas = 8, Galaxy = 9, Pinto = 4, Lumus = 9, Corinth = 5. What are the median and mean for this data set?</p>",
+          "answers": [ "median = 7, mean = 8", "median = 4, mean = 8", "median = 4, mean = 7", "median = 8, mean = 7" ],
+          "key": 3 },
+        { "number": 5,
+          "text": "<p>5. Just as in the previous problem, suppose that several lamps are assessed for quality by running them through a battery of 10 tests. If most lamps pass about the same number of tests, but one lamp passes far fewer tests, will this lamp’s performance affect the mode or the mean more?</p>",
+          "answers": [ "the mode will be affected more than the mean", "the mean will be affected more than the mode", "the mode and mean will be equally affected", "more information is needed about the particular scores" ],
+          "key": 1 },
+        { "number": 6,
+          "text": "6. Just as in the previous problem, suppose that several lamps are assessed for quality by running them through a battery of 10 tests. Most lamps pass about the same number of tests, but one lamp passes far fewer tests. Will the poorly performing lamp affect the median or the mean more?",
+          "answers": [ "the median will be affected more than the mean", "the mean will be affected more than the median", "the mean and median will be equally affected", "more information is needed about the particular scores" ],
+          "key": 1 }
     ];
-    doRadioSurvey( pretest_questions, display_loc, prepend_data, condition );
+    doRadioSurvey( pretest_questions, "pretestdata", display_loc, prepend_data, condition );
 }
 
-function doRadioSurvey( questions, display_loc, prepend_data, condition ) {
+function doRadioSurvey( questions, table_name, display_loc, prepend_data, condition ) {
     if ( questions.length==0 ) {
         doInstructions( display_loc, prepend_data, condition );
     } else {
@@ -24,14 +48,14 @@ function doRadioSurvey( questions, display_loc, prepend_data, condition ) {
 					type: 'post', 
 					cache: false, 
 					url: 'submit_data_mysql.php',
-					data: { 'table': 'pretestdata', 'json': JSON.stringify([[data]] ) },
+					data: { 'table': table_name, 'json': JSON.stringify([[data]] ) },
                     success: function(d) {
 						console.log(d)
-                        doRadioSurvey( questions, display_loc, prepend_data, condition );
+                        doRadioSurvey( questions, table_name, display_loc, prepend_data, condition );
 					},
 					error: function(d) {
 						console.log(d);
-                        doRadioSurvey( questions, display_loc, prepend_data, condition );
+                        doRadioSurvey( questions, table_name, display_loc, prepend_data, condition );
                     }
                 } );
             } );
@@ -40,27 +64,38 @@ function doRadioSurvey( questions, display_loc, prepend_data, condition ) {
 
 function doRadioQuestion( display_loc, question, callback_function ) {
     var content = "<form id='question_form' name='question_form' action=''><p>" + question.text + "</p>";
-    for ( var i=0; i<question.answers.length; i++ ) {
-        content += "<input type='radio' name='radio_option' value='" + i.toString() + "'>" + question.answers[i] + "<br>";
+    if ( question.answers != undefined ) {
+        for ( var i=0; i<question.answers.length; i++ ) {
+            content += "<input type='radio' name='radio_option' value='" + i.toString() + "'>" + question.answers[i] + "<br>";
+        }
+        content += "<br><input type='submit' id='submit_button' name='submit_button' value='Submit'></form>";
+    } else {
+        content += "<br><input type='submit' id='submit_button' name='submit_button' value='Continue'></form>";
     }
-    content += "<br><input type='submit' id='submit_button' name='submit_button' value='Submit'></form>";
     display_loc.html( content );
     resp_func = function(e) {
         e.preventDefault();
-        var response = $('input[name=radio_option]:checked').val();
-        if ( response == undefined ) {
-            alert( "Please select an option before proceeding." );
+        if ( question.answers != undefined ) {
+            var response = $('input[name=radio_option]:checked').val();
+            if ( response == undefined ) {
+                alert( "Please select an answer before proceeding." );
+            } else {
+                display_loc.html( "" );
+                $("#question_form").unbind("submit",resp_func);
+                callback_function( { "number": question.number, "key": question.key, "response": response, "correct": (question.key==question.response) } );
+            }
         } else {
             display_loc.html( "" );
             $("#question_form").unbind("submit",resp_func);
-            callback_function( { "number": question.number, "key": question.key, "response": response, "correct": (question.key==question.response) } );
+            callback_function( { "number": question.number } );
         }
     }
     $("#submit_button").click( resp_func );
 }
 
 function doInstructions( display_loc, prepend_data, condition ) {
-    var instructions = [ "<p>better</p>", "<p>stronger</p>", "<p>faster</p>" ];
+    var instructions = [
+        "<h1>Instruction Section</h1><p>This section will explain to you more about the concepts of mean, median, and mode.</p>", "<p>Placeholder for explanation of mean.</p>", "<p>Placeholder for explanation of median.</p>", "<p>Placeholder for explanation of mode.</p>", "<h1>Practice Section</h1><p>In this section, you'll have a chance to practice the concepts you just learned.</p><p>Placeholder for explanation of practice interface.</p>" ];
     var completion_function = function() {
         var trial_generator = new TrialGenerator( condition, false );
         doTrainingSession( display_loc, prepend_data, trial_generator, 0, "first trial", [] );
