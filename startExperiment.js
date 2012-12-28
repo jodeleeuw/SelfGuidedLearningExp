@@ -1,21 +1,99 @@
 //////////////////////////////////////////////////////////////////////
-// main experiment loop:
-// startExperiment, runExperiment, endExperiment
+// pre-training sections (pretest and instructions):
+// startExperiment, doRadioSurvey, doInstructions
 //////////////////////////////////////////////////////////////////////
 
-// startExperiment(): initiates recursive function runExperiment
-function startExperiment( display_loc, prepend_data, trial_generator ) {
-    runExperiment( display_loc, prepend_data, trial_generator, 0, "first trial", [] );
+function startExperiment( display_loc, prepend_data, condition ) {
+    var pretest_questions = [
+        { "number": 0, "text": "I am a question. Really?", "answers": [ "Yes", "No" ], "key": 0 },
+        { "number": 1, "text": "I am an answer. Really?", "answers": [ "Yes", "No" ], "key": 1 },
+        { "number": 2, "text": "Who's on first?", "answers": [ "Yes", "What", "Josh", "Paulo", "David", "Rob" ], "key": 1 }
+    ];
+    doRadioSurvey( pretest_questions, display_loc, prepend_data, condition );
 }
 
-// runExperiment(): does trials until a trial returns a false continue value
+function doRadioSurvey( questions, display_loc, prepend_data, condition ) {
+    if ( questions.length==0 ) {
+        doInstructions( display_loc, prepend_data, condition );
+    } else {
+        var question = questions.shift();
+        doRadioQuestion( display_loc, question, 
+            function( data ) {
+                data = $.extend( {}, prepend_data, data );
+                $.ajax({ 
+					type: 'post', 
+					cache: false, 
+					url: 'submit_data_mysql.php',
+					data: { 'table': 'pretestdata', 'json': JSON.stringify([[data]] ) },
+                    success: function(d) {
+						console.log(d)
+                        doRadioSurvey( questions, display_loc, prepend_data, condition );
+					},
+					error: function(d) {
+						console.log(d);
+                        doRadioSurvey( questions, display_loc, prepend_data, condition );
+                    }
+                } );
+            } );
+    }
+}
+
+function doRadioQuestion( display_loc, question, callback_function ) {
+    var content = "<form id='question_form' name='question_form' action=''><p>" + question.text + "</p>";
+    for ( var i=0; i<question.answers.length; i++ ) {
+        content += "<input type='radio' name='radio_option' value='" + i.toString() + "'>" + question.answers[i] + "<br>";
+    }
+    content += "<br><input type='submit' id='submit_button' name='submit_button' value='Submit'></form>";
+    display_loc.html( content );
+    resp_func = function(e) {
+        e.preventDefault();
+        var response = $('input[name=radio_option]:checked').val();
+        if ( response == undefined ) {
+            alert( "Please select an option before proceeding." );
+        } else {
+            display_loc.html( "" );
+            $("#question_form").unbind("submit",resp_func);
+            callback_function( { "number": question.number, "key": question.key, "response": response, "correct": (question.key==question.response) } );
+        }
+    }
+    $("#submit_button").click( resp_func );
+}
+
+function doInstructions( display_loc, prepend_data, condition ) {
+    var instructions = [ "<p>better</p>", "<p>stronger</p>", "<p>faster</p>" ];
+    var completion_function = function() {
+        var trial_generator = new TrialGenerator( condition, false );
+        doTrainingSession( display_loc, prepend_data, trial_generator, 0, "first trial", [] );
+    };
+    doSlideshow( display_loc, instructions, completion_function );
+}
+
+function doSlideshow( display_loc, content_array, completion_function ) {
+    if ( content_array.length==0 ) {
+        completion_function();
+    } else {
+        display_loc.html( content_array.shift() );
+        var continue_button = "<p><button type='button' id='continue_button'>Continue</button></p>";
+        display_loc.append( continue_button );
+        $("#continue_button").click( function() {
+            doSlideshow( display_loc, content_array, completion_function ); } );
+    }
+}
+    
+
+//////////////////////////////////////////////////////////////////////
+// training section:
+// doTrainingSession, endExperiment
+//////////////////////////////////////////////////////////////////////
+
+// doTrainingSession(): does trials until a trial returns a false continue value
 //  display_loc: an HTML div where the experiment is to be displayed
 //  prepend_data: subject-level data to be prepended to each row of trial-level data
 //  trial_generator: a TrialGenerator object which generates TrialSpec objects
 //  iter_num: number of the current trial, or 0 for the first trial
 //  option: option chosen on previous trial, or false for the first trial
 //  accum_data: data rows from already completed trials, or [] for the first trial
-function runExperiment( display_loc, prepend_data, trial_generator, iter_num, option_text, accum_data ) {
+function doTrainingSession( display_loc, prepend_data, trial_generator, iter_num, option_text, accum_data ) {
     var trial_spec  = trial_generator.getNextTrial( option_text );
     trial_spec.doTrial( display_loc,
         function( data ) {
@@ -31,11 +109,11 @@ function runExperiment( display_loc, prepend_data, trial_generator, iter_num, op
 					data: { 'table':'trialdata', 'json': JSON.stringify([[data]] ) },
                     success: function(d) {
 						console.log(d)
-						runExperiment( display_loc, prepend_data, trial_generator, iter_num+1, data.option_text, accum_data );
+						doTrainingSession( display_loc, prepend_data, trial_generator, iter_num+1, data.option_text, accum_data );
 					},
 					error: function(d) {
 						console.log(d);
-						runExperiment( display_loc, prepend_data, trial_generator, iter_num+1, data.option_text, accum_data );
+						doTrainingSession( display_loc, prepend_data, trial_generator, iter_num+1, data.option_text, accum_data );
 /*
 TBD (David): eventually something useful should happen on error, but at least now it will run without record_data.php
 */

@@ -169,13 +169,8 @@ function assignCondition($studentid, $condition)
 <script type="text/javascript">
 var sid = <?php echo $_SESSION['studentid']; ?>;
 
-var trial_generator = new TrialGenerator( "RR", false );
-// change the first arg to the TrialGenerator constructor to see different conditions
-// RR: related within and between categories
-// RU: related within, unrelated between categories
-// UR: unrelated within, related between categories
-// UU: unrelated within and between categories
-var prepend_data = { "subjid": sid };
+var condition       = 0;  // does nothing in the current version, but retained as placeholder in case we need it
+var prepend_data    = { "subjid": sid };
 
 
 // check if they already have seen consent form
@@ -200,6 +195,7 @@ $.ajax({
 	}
 });
 
+// DAVID to JOSH: this part will need to be revised to take account for progress on pretest and instructions
 function restore_progress(){
 	$.ajax({
 	type: 'post',
@@ -260,7 +256,7 @@ function show_consent_form() {
 function start() {
 	$("#wrapper").html('<div id="target"></div>');
 	var display_loc = $("#target");
-	startExperiment( display_loc, prepend_data, trial_generator );
+	startExperiment( display_loc, prepend_data, condition );
 }
 </script>
 </html>
