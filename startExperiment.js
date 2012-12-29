@@ -86,9 +86,20 @@ function doRadioQuestion( display_loc, question, callback_function ) {
 }
 
 function doInstructions( display_loc, prepend_data, condition ) {
+    var buttons = '<button type="button" class="option_buttons">Find the <em>Mean</em> for a <em>modified set of data</em>.' +
+        '<button type="button" class="option_buttons">Find the <em>Median</em> for the <em>same set of data</em>.' +
+        '<button type="button" class="option_buttons">Find the <em>Mode</em> for the <em>same set of data</em>.<br>' +
+        '<button type="button" class="option_buttons">Find the <em>Mean</em> for a <em>different story problem</em>.' +
+        '<button type="button" class="option_buttons">Find the <em>Median</em> for the <em>different story problem</em>.' +
+        '<button type="button" class="option_buttons">Find the <em>Mode</em> for the <em>different story problem</em>.';
+    var progbar = "<table border='1'><tr><td colspan='3'>Your Progress</td></tr><tr>" +
+        "<td><strong>Mean</strong><br>2 out of 5 complete</td>" +
+        "<td><strong>Median</strong><br>1 out of 5 complete</td>" +
+        "<td><strong>Mode</strong><br>3 out of 5 complete</td>" +
+        "</tr></table>";
     var instructions = [
-        "<h1>Instruction Section</h1><p>This section of the tutorial will explain to you more about the concepts of mean, median, and mode.</p>", "<p>Placeholder for explanation of mean.</p>", "<p>Placeholder for explanation of median.</p>", "<p>Placeholder for explanation of mode.</p>", "<h1>Practice Section</h1><p>In this section, you'll have a chance to practice the concepts you just learned.</p><p>You will see a series of practice problems for calculating mean, median, and mode. You'll have to answer each problem first, and then you'll be shown the correct answer.</p><p>After you complete each example, you will be able to choose what kind of example you want to see next. You'll see a set of buttons like this at the bottom of the page:</p><p><img src='buttons.png'></p><p>You can select mean, median, or mode by choosing buttons in the different columns. If you choose buttons in the first row, the next example will use the same story problem and either the same data or slightly modified data. If you choose buttons in the second row, the next example will use a completely different story problem and data.</p>",
-        "<p>You will have to complete at least 5 examples of each type of problem, i.e. 15 total. Once you've finished this minimum number, a 'Quit' button will appear which you can use to end the tutorial. However, you're welcome to do even more examples if you want - there's no limit!</p><p>At the top of the page, you'lll see a table like this:</p><p><img src='progress.png'></p><p>This will tell you how many problems you have finished already for each type.</p><p>OK, that's all! Click below to get started!"
+        "<h1>Instruction Section</h1><p>This section of the tutorial will explain to you more about the concepts of mean, median, and mode.</p>", "<p>Placeholder for explanation of mean.</p>", "<p>Placeholder for explanation of median.</p>", "<p>Placeholder for explanation of mode.</p>", "<h1>Practice Section</h1><p>In this section, you'll have a chance to practice the concepts you just learned.</p><p>You will see a series of practice problems for calculating mean, median, and mode. You'll have to answer each problem first, and then you'll be shown the correct answer.</p><p>After you complete each example, you will be able to choose what kind of example you want to see next. You'll see a set of buttons like this at the bottom of the page:</p><p>"+buttons+"</p><p>You can select mean, median, or mode by choosing buttons in the different columns. If you choose buttons in the first row, the next example will use the same story problem and either the same data or slightly modified data. If you choose buttons in the second row, the next example will use a completely different story problem and data.</p>",
+        "<p>You will have to complete at least 5 examples of each type of problem, i.e. 15 total. Once you've finished this minimum number, a 'Quit' button will appear which you can use to end the tutorial. However, you're welcome to do even more examples if you want - there's no limit!</p><p>At the top of the page, you'll see a table like this:</p><p>"+progbar+"</p><p>This will tell you how many problems you have finished already for each type.</p><p>OK, that's all! Click below to get started!"
     ];
     var completion_function = function() {
         var trial_generator = new TrialGenerator( condition, false );
@@ -109,7 +120,6 @@ function doSlideshow( display_loc, content_array, completion_function ) {
         $("#continue_button").focus();
     }
 }
-
 
 //////////////////////////////////////////////////////////////////////
 // training section:
@@ -501,8 +511,6 @@ function modifyAndStringifyDataset( ds, min, max ) {
 // getOptionsText: method of TrialGenerator object
 //  provides an array of HTML strings with the appropriate text for the option buttons which should appear on the present trial
 //  includes a "Quit" button iff participant has already completed the minimum number of questions in each category
-
-/* this isn't quite right, because it allows you to keep the same data for same measure by switching back and forth */
 
 function getOptionsText() {
     var options = [];
