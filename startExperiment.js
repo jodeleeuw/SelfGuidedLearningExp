@@ -6,32 +6,23 @@
 function startExperiment( display_loc, prepend_data, condition ) {
     var pretest_questions = [
         { "number": 0,
-          "text": "<h1>Test Section</h1><p>In this section, you will take a short multiple choice test about mean, median, and mode.</p><p>The purpose of this test is to find out how much you already know about these concepts. So, please don't use any outside sources (books, friends, internet, calculator).</p><p>This test doesn't count towards your grade, but it's very similar to the test you'll receive later in class, which <strong>will</strong> count towards your grade. So this test is good practice for the real one.</p><p>Click below to start!</p>" },
+          "text": "<h1>Test Section</h1><p>In this section of the tutorial, you will take a short multiple choice test about mean, median, and mode.</p><p>The purpose of this test is to find out how much you already know about these concepts. So, please don't use any outside sources (books, friends, internet, calculator).</p><p>This test doesn't count towards your grade, but it's very similar to the test you'll receive later in class, which <strong>will</strong> count towards your grade. So this test is good practice for the real one.</p><p>Click below to start!</p>" },
         { "number": 1,
-          "text": "<p>1. 5 students in a math class take an exam.  Their scores, out of 10 problems, were: Jane = 8, Frank = 3, Erica = 2, John = 4, Don = 8. What are the median and mean for this data set?</p>",
-          "answers": [ "median = 5, mean = 4", "median = 4, mean = 5", "median = 2, mean = 4", "median = 2, mean = 5" ],
-          "key": 1 },
+          "text": "1.  Five pizzas were given quality scores by an expert taster.  Their scores were: Pizza World = 8, Slices! = 3, Pisa Pizza = 2, Pizza a go-go = 4, Crusty's = 8. What are the mode, median and mean for this data set?",
+          "answers": [ "A) mode = 8, median = 5, mean = 4", "B) mode = 5, median = 8, mean = 4", "C) mode = 8, median = 4, mean = 5", "D) mode = 5, median = 4, mean = 8" ],
+          "key": 2 },
         { "number": 2,
-          "text": "<p>2. Imagine a math exam in which 15 students do very well, getting scores of 98, 99, and 100 out of 100 possible points.  However, the remaining 3 students get very poor scores: 5, 8, and 9.  Will the mode be less than or more than the mean?</p>",
-          /* David's note: are we telling them how to calculate the mode in a case like this, where each number only occurs once? */
-          "answers": [ "the mode will be more than the mean", "the mode will be less than the mean", "the mode and mean will be the same", "more information is needed about the particular scores" ],
-          "key": 0 },
-        { "number": 3,
-          "text": "<p>3. Just as in the previous problem, imagine a math exam in which 15 students do very well, getting scores of 98, 99, and 100 out of 100 possible points, while the remaining 3 students get very poor scores: 5, 8, and 9. Which will be higher: the median or the mean?</p>",
-          "answers": [ "the median will be more than the mean", "the median will be less than the mean", "the median and mean will be the same", "more information is needed about the particular scores" ],
-          "key": 0 },
-        { "number": 4,
-          "text": "<p>4. 5 lamps are assessed for their quality by running them through a battery of 10 tests.  Here are the number of tests that each of 5 lamp models passed: Vegas = 8, Galaxy = 9, Pinto = 4, Lumus = 9, Corinth = 5. What are the median and mean for this data set?</p>",
-          "answers": [ "median = 7, mean = 8", "median = 4, mean = 8", "median = 4, mean = 7", "median = 8, mean = 7" ],
-          "key": 3 },
-        { "number": 5,
-          "text": "<p>5. Just as in the previous problem, suppose that several lamps are assessed for quality by running them through a battery of 10 tests. If most lamps pass about the same number of tests, but one lamp passes far fewer tests, will this lamp’s performance affect the mode or the mean more?</p>",
-          "answers": [ "the mode will be affected more than the mean", "the mean will be affected more than the mode", "the mode and mean will be equally affected", "more information is needed about the particular scores" ],
+          "text": "2.  Imagine a vocabulary test in which 15 students do very well, getting scores of 98, 99, and 100 out of 100 possible points.  However, the remaining 3 students get very poor scores: 5, 8, and 9.  Will the mode be less than or more than the mean?",
+          "answers": [ "A) the mode will be less than the mean", "B) the mode will be more than the mean", "C) the mode and mean will be the same", "D) more information is needed about the particular scores" ],
           "key": 1 },
-        { "number": 6,
-          "text": "6. Just as in the previous problem, suppose that several lamps are assessed for quality by running them through a battery of 10 tests. Most lamps pass about the same number of tests, but one lamp passes far fewer tests. Will the poorly performing lamp affect the median or the mean more?",
-          "answers": [ "the median will be affected more than the mean", "the mean will be affected more than the median", "the mean and median will be equally affected", "more information is needed about the particular scores" ],
-          "key": 1 }
+        { "number": 3,
+          "text": "3.  There are 7 players on a particular basketball team.  On a particular game, the median number of points scored by each player was 12 and no two players scored the same number of points.  If the lowest and highest scoring players are not considered, what will be the median of the remaining 5 players' scores?",
+          "answers": [ "A) more information is needed about the particular scores", "B) 8", "C) 10", "D) 12" ],
+          "key": 3 },
+        { "number": 4,
+          "text": "4.  Three children in a family have shoe sizes of 5, 10, and 9.  What are mean and median for the shoes sizes in this family?",
+          "answers": [ "A) mean = 9, median = 10", "B) mean = 9, median = 9", "C) mean = 8, median = 10", "D) mean = 8, median = 9" ],
+          "key": 3 }
     ];
     doRadioSurvey( pretest_questions, "pretestdata", display_loc, prepend_data, condition );
 }
@@ -91,11 +82,14 @@ function doRadioQuestion( display_loc, question, callback_function ) {
         }
     }
     $("#submit_button").click( resp_func );
+    $("#submit_button").focus();
 }
 
 function doInstructions( display_loc, prepend_data, condition ) {
     var instructions = [
-        "<h1>Instruction Section</h1><p>This section will explain to you more about the concepts of mean, median, and mode.</p>", "<p>Placeholder for explanation of mean.</p>", "<p>Placeholder for explanation of median.</p>", "<p>Placeholder for explanation of mode.</p>", "<h1>Practice Section</h1><p>In this section, you'll have a chance to practice the concepts you just learned.</p><p>Placeholder for explanation of practice interface.</p>" ];
+        "<h1>Instruction Section</h1><p>This section of the tutorial will explain to you more about the concepts of mean, median, and mode.</p>", "<p>Placeholder for explanation of mean.</p>", "<p>Placeholder for explanation of median.</p>", "<p>Placeholder for explanation of mode.</p>", "<h1>Practice Section</h1><p>In this section, you'll have a chance to practice the concepts you just learned.</p><p>You will see a series of practice problems for calculating mean, median, and mode. You'll have to answer each problem first, and then you'll be shown the correct answer.</p><p>After you complete each example, you will be able to choose what kind of example you want to see next. You'll see a set of buttons like this at the bottom of the page:</p><p><img src='buttons.png'></p><p>You can select mean, median, or mode by choosing buttons in the different columns. If you choose buttons in the first row, the next example will use the same story problem and either the same data or slightly modified data. If you choose buttons in the second row, the next example will use a completely different story problem and data.</p>",
+        "<p>You will have to complete at least 5 examples of each type of problem, i.e. 15 total. Once you've finished this minimum number, a 'Quit' button will appear which you can use to end the tutorial. However, you're welcome to do even more examples if you want - there's no limit!</p><p>At the top of the page, you'lll see a table like this:</p><p><img src='progress.png'></p><p>This will tell you how many problems you have finished already for each type.</p><p>OK, that's all! Click below to get started!"
+    ];
     var completion_function = function() {
         var trial_generator = new TrialGenerator( condition, false );
         doTrainingSession( display_loc, prepend_data, trial_generator, 0, "first trial", [] );
@@ -112,9 +106,10 @@ function doSlideshow( display_loc, content_array, completion_function ) {
         display_loc.append( continue_button );
         $("#continue_button").click( function() {
             doSlideshow( display_loc, content_array, completion_function ); } );
+        $("#continue_button").focus();
     }
 }
-    
+
 
 //////////////////////////////////////////////////////////////////////
 // training section:
@@ -284,7 +279,7 @@ TBD (Paulo/David): the story content below is just a placeholder. Eventually tri
     ];
 
     this.categories = [ "Mean", "Median", "Mode" ];
-    this.complete_targ  = 2;        // must complete this many probs in each category before Quit option available
+    this.complete_targ  = 5;        // must complete this many probs in each category before Quit option available
     this.completes_tot  = [];       // total number currently completed in each category
     this.completes_rct  = [];       // number completed in each category since last change of story or data set
     for ( var i=0; i<this.categories.length; i++ ) { this.completes_tot[i] = 0; }
@@ -367,9 +362,9 @@ function getNextTrial( option_text ) {
 }
 
 function getProgressBar() {
-    var bar = "<table border='1'><tr><td colspan='"+this.categories.length+"'>Number of problems completed for each type, including this problem:</td></tr><tr>";
+    var bar = "<table border='1'><tr><td colspan='"+this.categories.length+"'>Your Progress</td></tr><tr>";
     for ( var i=0; i<this.categories.length; i++ ) {
-        bar += "<td><strong>"+this.categories[i]+":</strong><br>"+this.completes_tot[i]+" / "+this.complete_targ+"</td>";
+        bar += "<td><strong>"+this.categories[i]+":</strong><br>"+this.completes_tot[i]+" out of "+this.complete_targ+" complete</td>";
     }
     bar += "</tr></table>";
     return bar;
