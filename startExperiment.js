@@ -86,12 +86,12 @@ function doRadioQuestion( display_loc, question, callback_function ) {
 }
 
 function doInstructions( display_loc, prepend_data, condition ) {
-    var buttons = '<button type="button" class="option_buttons">Find the <em>Mean</em> for a <em>modified set of data</em>.' +
-        '<button type="button" class="option_buttons">Find the <em>Median</em> for the <em>same set of data</em>.' +
-        '<button type="button" class="option_buttons">Find the <em>Mode</em> for the <em>same set of data</em>.<br>' +
-        '<button type="button" class="option_buttons">Find the <em>Mean</em> for a <em>different story problem</em>.' +
-        '<button type="button" class="option_buttons">Find the <em>Median</em> for the <em>different story problem</em>.' +
-        '<button type="button" class="option_buttons">Find the <em>Mode</em> for the <em>different story problem</em>.';
+    var buttons = '<button type="button" class="option_buttons">Find the <em>Mean</em> for a <em>modified set of data</em>.</button>' +
+        '<button type="button" class="option_buttons">Find the <em>Median</em> for the <em>same set of data</em>.</button>' +
+        '<button type="button" class="option_buttons">Find the <em>Mode</em> for the <em>same set of data</em>.</button><br>' +
+        '<button type="button" class="option_buttons">Find the <em>Mean</em> for a <em>different story problem</em>.</button>' +
+        '<button type="button" class="option_buttons">Find the <em>Median</em> for the <em>different story problem</em>.</button>' +
+        '<button type="button" class="option_buttons">Find the <em>Mode</em> for the <em>different story problem</em>.</button>';
     var progbar = "<table border='1'><tr><td colspan='3'>Your Progress</td></tr><tr>" +
         "<td><strong>Mean</strong><br>2 out of 5 complete</td>" +
         "<td><strong>Median</strong><br>1 out of 5 complete</td>" +
