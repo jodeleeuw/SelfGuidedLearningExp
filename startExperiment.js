@@ -1,35 +1,80 @@
-//////////////////////////////////////////////////////////////////////
-// pre-training sections (pretest and instructions):
-// startExperiment, doRadioSurvey, doInstructions
-//////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////
+// main experiment structure
+// startExperiment, doPretest, doInstructions, doTraining, endExperiment
+///////////////////////////////////////////////////////////////////////////
 
-function startExperiment( display_loc, prepend_data, condition ) {
-    var pretest_questions = [
-        { "number": 0,
-          "text": "<h1>Test Section</h1><p>In this section of the tutorial, you will take a short multiple choice test about mean, median, and mode.</p><p>The purpose of this test is to find out how much you already know about these concepts. So, please don't use any outside sources (books, friends, internet, calculator).</p><p>This test doesn't count towards your grade, but it's very similar to the test you'll receive later in class, which <strong>will</strong> count towards your grade. So this test is good practice for the real one.</p><p>Click below to start!</p>" },
-        { "number": 1,
-          "text": "1.  Five pizzas were given quality scores by an expert taster.  Their scores were: Pizza World = 8, Slices! = 3, Pisa Pizza = 2, Pizza a go-go = 4, Crusty's = 8. What are the mode, median and mean for this data set?",
-          "answers": [ "A) mode = 8, median = 5, mean = 4", "B) mode = 5, median = 8, mean = 4", "C) mode = 8, median = 4, mean = 5", "D) mode = 5, median = 4, mean = 8" ],
-          "key": 2 },
-        { "number": 2,
-          "text": "2.  Imagine a vocabulary test in which 15 students do very well, getting scores of 98, 99, and 100 out of 100 possible points.  However, the remaining 3 students get very poor scores: 5, 8, and 9.  Will the mode be less than or more than the mean?",
-          "answers": [ "A) the mode will be less than the mean", "B) the mode will be more than the mean", "C) the mode and mean will be the same", "D) more information is needed about the particular scores" ],
-          "key": 1 },
-        { "number": 3,
-          "text": "3.  There are 7 players on a particular basketball team.  On a particular game, the median number of points scored by each player was 12 and no two players scored the same number of points.  If the lowest and highest scoring players are not considered, what will be the median of the remaining 5 players' scores?",
-          "answers": [ "A) more information is needed about the particular scores", "B) 8", "C) 10", "D) 12" ],
-          "key": 3 },
-        { "number": 4,
-          "text": "4.  Three children in a family have shoe sizes of 5, 10, and 9.  What are mean and median for the shoes sizes in this family?",
-          "answers": [ "A) mean = 9, median = 10", "B) mean = 9, median = 9", "C) mean = 8, median = 10", "D) mean = 8, median = 9" ],
-          "key": 3 }
-    ];
-    doRadioSurvey( pretest_questions, "pretestdata", display_loc, prepend_data, condition );
+// global variables
+//  assigned by startExperiment call
+//  only referenced in main experiment structure
+var startExperiment_pretest_questions;
+var startExperiment_training_questions;
+
+// startExperiment: assign global vars and run pretest
+function startExperiment( display_loc, prepend_data, external_content ) {
+    startExperiment_pretest_questions   = external_content.pretest_questions;
+    startExperiment_training_questions  = external_content.training_questions;
+    doPretest( display_loc, prepend_data );
 }
 
-function doRadioSurvey( questions, table_name, display_loc, prepend_data, condition ) {
+// doPretest: and then show training instructions
+function doPretest( display_loc, prepend_data ) {
+    var callback = function() {
+        doInstructions( display_loc, prepend_data );
+    };
+    doRadioSurvey( startExperiment_pretest_questions, "pretestdata", display_loc, prepend_data, callback );
+}
+
+// doInstructions: and then run the training
+function doInstructions( display_loc, prepend_data ) {
+    var callback = function() {
+        doTraining( display_loc, prepend_data );
+    };
+    var buttons = '<button type="button" class="option_buttons">Find the <em>Mean</em> for a <em>modified set of data</em>.</button>' +
+        '<button type="button" class="option_buttons">Find the <em>Median</em> for the <em>same set of data</em>.</button>' +
+        '<button type="button" class="option_buttons">Find the <em>Mode</em> for the <em>same set of data</em>.</button><br>' +
+        '<button type="button" class="option_buttons">Find the <em>Mean</em> for a <em>different story problem</em>.</button>' +
+        '<button type="button" class="option_buttons">Find the <em>Median</em> for the <em>different story problem</em>.</button>' +
+        '<button type="button" class="option_buttons">Find the <em>Mode</em> for the <em>different story problem</em>.</button>';
+    var progbar = "<table border='1'><tr><td colspan='3'>Your Progress</td></tr><tr>" +
+        "<td><strong>Mean</strong><br>2 out of 5 complete</td>" +
+        "<td><strong>Median</strong><br>1 out of 5 complete</td>" +
+        "<td><strong>Mode</strong><br>3 out of 5 complete</td>" +
+        "</tr></table>";
+    var instructions = [
+        "<h1>Instruction Section</h1><p>This section of the tutorial will explain to you more about the concepts of mean, median, and mode.</p>", "<p>Placeholder for explanation of mean.</p>", "<p>Placeholder for explanation of median.</p>", "<p>Placeholder for explanation of mode.</p>", "<h1>Practice Section</h1><p>In this section, you'll have a chance to practice the concepts you just learned.</p><p>You will see a series of practice problems for calculating mean, median, and mode. You'll have to answer each problem first, and then you'll be shown the correct answer.</p><p>After you complete each example, you will be able to choose what kind of example you want to see next. You'll see a set of buttons like this at the bottom of the page:</p><p>"+buttons+"</p><p>You can select mean, median, or mode by choosing buttons in the different columns. If you choose buttons in the first row, the next example will use the same story problem and either the same data or slightly modified data. If you choose buttons in the second row, the next example will use a completely different story problem and data.</p>",
+        "<p>You will have to complete at least 5 examples of each type of problem, i.e. 15 total. At the top of the page, you'll see a table like this:</p><p>"+progbar+"</p><p>This will tell you how many problems you have finished already for each type. Once you've finished this minimum number, a 'Quit' button will appear which you can use to end the tutorial. However, you can do even more examples if you want - there's no limit!</p><p>OK, that's all! Click below to get started!"
+    ];
+    doSlideshow( display_loc, instructions, callback );
+}
+
+// doTraining: and then end the experiment
+function doTraining( display_loc, prepend_data ) {
+    var callback = function( data ) {
+        endExperiment( display_loc, data );
+    };
+    var trial_generator = new TrialGenerator( startExperiment_training_questions );
+    iterateTrialGenerator( display_loc, prepend_data, trial_generator, 0, "first trial", [], callback );
+}
+
+// endExperiment: records completion data and displays completion message
+/*
+TBD (Josh?/David): right now this just displays the accumulated data so we know it's working. Eventually we need it to close down gracefully, possibly saving some info about completion to database (Josh?) and display a nice message to the participant (David).
+*/
+function endExperiment( display_loc, data ) {
+    display_loc.html( JSON.stringify( data ) );
+}
+
+
+//////////////////////////////////////////////////////////////////////
+// helper functions for pretest and instructions
+// doRadioSurvey, doRadioQuestion, doSlideshow
+//////////////////////////////////////////////////////////////////////
+
+// doRadioSurvey
+//  ask a series of multiple-choice questions
+function doRadioSurvey( questions, table_name, display_loc, prepend_data, callback ) {
     if ( questions.length==0 ) {
-        doInstructions( display_loc, prepend_data, condition );
+        callback();
     } else {
         var question = questions.shift();
         doRadioQuestion( display_loc, question, 
@@ -42,18 +87,20 @@ function doRadioSurvey( questions, table_name, display_loc, prepend_data, condit
 					data: { 'table': table_name, 'json': JSON.stringify([[data]] ) },
                     success: function(d) {
 						console.log(d)
-                        doRadioSurvey( questions, table_name, display_loc, prepend_data, condition );
+                        doRadioSurvey( questions, table_name, display_loc, prepend_data, callback );
 					},
 					error: function(d) {
 						console.log(d);
-                        doRadioSurvey( questions, table_name, display_loc, prepend_data, condition );
+                        doRadioSurvey( questions, table_name, display_loc, prepend_data, callback );
                     }
                 } );
             } );
     }
 }
 
-function doRadioQuestion( display_loc, question, callback_function ) {
+// doRadioQuestion
+//  ask a single multiple-choice question
+function doRadioQuestion( display_loc, question, callback ) {
     var content = "<form id='question_form' name='question_form' action=''><p>" + question.text + "</p>";
     if ( question.answers != undefined ) {
         for ( var i=0; i<question.answers.length; i++ ) {
@@ -73,74 +120,56 @@ function doRadioQuestion( display_loc, question, callback_function ) {
             } else {
                 display_loc.html( "" );
                 $("#question_form").unbind("submit",resp_func);
-                callback_function( { "number": question.number, "key": question.key, "response": response, "correct": (question.key==question.response) } );
+                callback( { "number": question.number, "key": question.key, "response": response, "correct": (question.key==question.response) } );
             }
         } else {
             display_loc.html( "" );
             $("#question_form").unbind("submit",resp_func);
-            callback_function( { "number": question.number } );
+            callback( { "number": question.number } );
         }
     }
     $("#submit_button").click( resp_func );
     $("#submit_button").focus();
 }
 
-function doInstructions( display_loc, prepend_data, condition ) {
-    var buttons = '<button type="button" class="option_buttons">Find the <em>Mean</em> for a <em>modified set of data</em>.</button>' +
-        '<button type="button" class="option_buttons">Find the <em>Median</em> for the <em>same set of data</em>.</button>' +
-        '<button type="button" class="option_buttons">Find the <em>Mode</em> for the <em>same set of data</em>.</button><br>' +
-        '<button type="button" class="option_buttons">Find the <em>Mean</em> for a <em>different story problem</em>.</button>' +
-        '<button type="button" class="option_buttons">Find the <em>Median</em> for the <em>different story problem</em>.</button>' +
-        '<button type="button" class="option_buttons">Find the <em>Mode</em> for the <em>different story problem</em>.</button>';
-    var progbar = "<table border='1'><tr><td colspan='3'>Your Progress</td></tr><tr>" +
-        "<td><strong>Mean</strong><br>2 out of 5 complete</td>" +
-        "<td><strong>Median</strong><br>1 out of 5 complete</td>" +
-        "<td><strong>Mode</strong><br>3 out of 5 complete</td>" +
-        "</tr></table>";
-    var instructions = [
-        "<h1>Instruction Section</h1><p>This section of the tutorial will explain to you more about the concepts of mean, median, and mode.</p>", "<p>Placeholder for explanation of mean.</p>", "<p>Placeholder for explanation of median.</p>", "<p>Placeholder for explanation of mode.</p>", "<h1>Practice Section</h1><p>In this section, you'll have a chance to practice the concepts you just learned.</p><p>You will see a series of practice problems for calculating mean, median, and mode. You'll have to answer each problem first, and then you'll be shown the correct answer.</p><p>After you complete each example, you will be able to choose what kind of example you want to see next. You'll see a set of buttons like this at the bottom of the page:</p><p>"+buttons+"</p><p>You can select mean, median, or mode by choosing buttons in the different columns. If you choose buttons in the first row, the next example will use the same story problem and either the same data or slightly modified data. If you choose buttons in the second row, the next example will use a completely different story problem and data.</p>",
-        "<p>You will have to complete at least 5 examples of each type of problem, i.e. 15 total. Once you've finished this minimum number, a 'Quit' button will appear which you can use to end the tutorial. However, you're welcome to do even more examples if you want - there's no limit!</p><p>At the top of the page, you'll see a table like this:</p><p>"+progbar+"</p><p>This will tell you how many problems you have finished already for each type.</p><p>OK, that's all! Click below to get started!"
-    ];
-    var completion_function = function() {
-        var trial_generator = new TrialGenerator( condition, false );
-        doTrainingSession( display_loc, prepend_data, trial_generator, 0, "first trial", [] );
-    };
-    doSlideshow( display_loc, instructions, completion_function );
-}
-
-function doSlideshow( display_loc, content_array, completion_function ) {
+// doSlideshow
+//  present a sequence of text blocks
+function doSlideshow( display_loc, content_array, callback ) {
     if ( content_array.length==0 ) {
-        completion_function();
+        callback();
     } else {
         display_loc.html( content_array.shift() );
         var continue_button = "<p><button type='button' id='continue_button'>Continue</button></p>";
         display_loc.append( continue_button );
         $("#continue_button").click( function() {
-            doSlideshow( display_loc, content_array, completion_function ); } );
+            doSlideshow( display_loc, content_array, callback ); } );
         $("#continue_button").focus();
     }
 }
 
+
 //////////////////////////////////////////////////////////////////////
-// training section:
-// doTrainingSession, endExperiment
+// helper classes and functions for training:
+// iterateTrialGenerator
+// TrialSpec class, doTrial
+// TrialGenerator class, getNextTrial, other methods of TrialGenerator
 //////////////////////////////////////////////////////////////////////
 
-// doTrainingSession(): does trials until a trial returns a false continue value
+// iterateTrialGenerator(): does trials until a trial returns a false continue value
 //  display_loc: an HTML div where the experiment is to be displayed
 //  prepend_data: subject-level data to be prepended to each row of trial-level data
 //  trial_generator: a TrialGenerator object which generates TrialSpec objects
 //  iter_num: number of the current trial, or 0 for the first trial
 //  option: option chosen on previous trial, or false for the first trial
 //  accum_data: data rows from already completed trials, or [] for the first trial
-function doTrainingSession( display_loc, prepend_data, trial_generator, iter_num, option_text, accum_data ) {
+function iterateTrialGenerator( display_loc, prepend_data, trial_generator, iter_num, option_text, accum_data, callback ) {
     var trial_spec  = trial_generator.getNextTrial( option_text );
     trial_spec.doTrial( display_loc,
         function( data ) {
             data        = $.extend( {}, prepend_data, { "trial_num": iter_num }, data );
             accum_data  = accum_data.concat( [ data ] );
             if ( data.option_text=="Quit" ) {
-                endExperiment( display_loc, accum_data );
+                callback( accum_data );
             } else {
                 $.ajax({ 
 					type: 'post', 
@@ -149,11 +178,11 @@ function doTrainingSession( display_loc, prepend_data, trial_generator, iter_num
 					data: { 'table':'trialdata', 'json': JSON.stringify([[data]] ) },
                     success: function(d) {
 						console.log(d)
-						doTrainingSession( display_loc, prepend_data, trial_generator, iter_num+1, data.option_text, accum_data );
+						iterateTrialGenerator( display_loc, prepend_data, trial_generator, iter_num+1, data.option_text, accum_data, callback );
 					},
 					error: function(d) {
 						console.log(d);
-						doTrainingSession( display_loc, prepend_data, trial_generator, iter_num+1, data.option_text, accum_data );
+						iterateTrialGenerator( display_loc, prepend_data, trial_generator, iter_num+1, data.option_text, accum_data, callback );
 /*
 TBD (David): eventually something useful should happen on error, but at least now it will run without record_data.php
 */
@@ -163,20 +192,6 @@ TBD (David): eventually something useful should happen on error, but at least no
         } 
 	);
 }
-
-// endExperiment(): records completion data and displays completion message
-/*
-TBD (Josh?/David): right now this just displays the accumulated data so we know it's working. Eventually we need it to close down gracefully, possibly saving some info about completion to database (Josh?) and display a nice message to the participant (David).
-*/
-function endExperiment( display_loc, accum_data ) {
-    display_loc.html( JSON.stringify( accum_data ) );
-}
-
-
-//////////////////////////////////////////////////////////////////////
-// trial handling:
-// TrialSpec class, doTrial
-//////////////////////////////////////////////////////////////////////
 
 // TrialSpec class
 TrialSpec = function( category, question, answer, feedback, options, data ) {
@@ -266,44 +281,23 @@ function doTrial( display_loc, callback ) {
     var start_time = (new Date()).getTime();
 }
 
-//////////////////////////////////////////////////////////////////////
-// trial generation:
-// TrialGenerator class, getNextTrial
-//////////////////////////////////////////////////////////////////////
-
-TrialGenerator = function( condition, items ) {
-/*
-David 2012.12.23
-condition no longer does anything because we have changed experimental design so that there is no manipulation.
-however, I am leaving the parameter there so that function calls which rely on it will not be screwed up.
-eventually we should get rid of it.
-*/
-/*
-TBD (Paulo/David): the story content below is just a placeholder. Eventually trialspecs should be instantiated using content passed in via the items param. We should ensure that the number of stories and is the same for each category. We should have enough stories that people are unlikely to exhaust them, but if people do, the code will respond gracefully by looping back to the beginning.
-*/
-    this.stories    = [ 
-        { text: "The scores of several students on a 10-point pop quiz are shown below.", ques: "students' test scores", min: 3, max: 10 },
-        { text: "The data below shows the numbers of stories of several buildings in a neighborhood.", ques: "number of stories", min: 1, max: 6 },
-        { text: "In a marketing research study, several consumers each rated how much they liked a product on a scale of 1 to 5. Their ratings are shown below.", ques: "their ratings", min: 1, max: 5 },
-        { text: "Several fishermen went fishing on the same day. Below you can how many fish the different fishermen caught.", ques: "number of fish caught", min: 0, max: 8 }
-    ];
-
+// TrialGenerator class
+TrialGenerator = function( questions ) {
+    this.stories    = questions;
     this.categories = [ "Mean", "Median", "Mode" ];
     this.complete_targ  = 5;        // must complete this many probs in each category before Quit option available
     this.completes_tot  = [];       // total number currently completed in each category
     this.completes_rct  = [];       // number completed in each category since last change of story or data set
     for ( var i=0; i<this.categories.length; i++ ) { this.completes_tot[i] = 0; }
-/*    
-    this.curr_cat_idx   = 0;        // index of category for the first example to be shown
-    this.curr_story_idx = 0;        // index of story for the first example to be shown
-*/
-    this.condition          = condition;
     this.getNextTrial       = getNextTrial;
     this.getOptionsText     = getOptionsText;
     this.getNewDataset      = getNewDataset;
     this.getProgressBar     = getProgressBar;
 }
 
+// getNextTrial(): method of TrialGenerator class
+//  given the option selected by user on previous trial, or "first trial" if there is no previous trial,
+//  generate TrialSpec object for the next trial
 function getNextTrial( option_text ) {
     // determine trial params: category index, story index, and relation of new dataset to previous dataset
     var data_rel;
@@ -380,7 +374,7 @@ function getProgressBar() {
     return bar;
 }
 
-// getNewDataset: method of TrialGenerator object
+// getNewDataset: method of TrialGenerator class
 //  generates a new data set, records it in the TrialGenerator's dataset property, and returns an HTML text version thereof
 //  if relation is random, new data is completely random within constraints of current value of this.story
 //  if relation is identical, new data is same as old data
@@ -622,6 +616,7 @@ function getFeedback( dataset, measure ) {
     }
     return { false: incorr, true: correct };
 }
+
 
 //////////////////////////////////////////////////////////////////////
 // utilities
