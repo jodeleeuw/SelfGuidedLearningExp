@@ -8,6 +8,7 @@
 //  only referenced in main experiment structure
 var startExperiment_pretest_questions;
 var startExperiment_training_questions;
+var startExperiment_skip = { "pretest": true, "instructions": false };
 
 // startExperiment: assign global vars and run pretest
 function startExperiment( display_loc, prepend_data, external_content ) {
@@ -21,7 +22,11 @@ function doPretest( display_loc, prepend_data ) {
     var callback = function() {
         doInstructions( display_loc, prepend_data );
     };
-    doRadioSurvey( startExperiment_pretest_questions, "pretestdata", display_loc, prepend_data, callback );
+    var questions = [
+        { "number": 0, "text": "<h1>Test Section</h1><p>In this section of the tutorial, you will take a short multiple choice test about mean, median, and mode.</p><p>The purpose of this test is to find out how much you already know about these concepts. So, please don't use any outside sources (books, friends, internet, calculator).</p><p>This test doesn't count towards your grade, but it's very similar to the test you'll receive later in class, which <strong>will</strong> count towards your grade. So this test is good practice for the real one.</p><p>Click below to start!</p>" }
+    ].concat( startExperiment_pretest_questions );
+    if ( startExperiment_skip.pretest ) { questions = []; }
+    doRadioSurvey( questions, "pretestdata", display_loc, prepend_data, callback );
 }
 
 // doInstructions: and then run the training
@@ -35,15 +40,19 @@ function doInstructions( display_loc, prepend_data ) {
         '<button type="button" class="option_buttons">Find the <em>Mean</em> for a <em>different story problem</em>.</button>' +
         '<button type="button" class="option_buttons">Find the <em>Median</em> for the <em>different story problem</em>.</button>' +
         '<button type="button" class="option_buttons">Find the <em>Mode</em> for the <em>different story problem</em>.</button>';
-    var progbar = "<table border='1'><tr><td colspan='3'>Your Progress</td></tr><tr>" +
+    var progbar = "<table border='1'><tr>" + // "<table border='1'><tr><td colspan='3'>Your Progress</td></tr><tr>" +
         "<td><strong>Mean</strong><br>2 out of 5 complete</td>" +
         "<td><strong>Median</strong><br>1 out of 5 complete</td>" +
         "<td><strong>Mode</strong><br>3 out of 5 complete</td>" +
         "</tr></table>";
     var instructions = [
-        "<h1>Instruction Section</h1><p>This section of the tutorial will explain to you more about the concepts of mean, median, and mode.</p>", "<p>Placeholder for explanation of mean.</p>", "<p>Placeholder for explanation of median.</p>", "<p>Placeholder for explanation of mode.</p>", "<h1>Practice Section</h1><p>In this section, you'll have a chance to practice the concepts you just learned.</p><p>You will see a series of practice problems for calculating mean, median, and mode. You'll have to answer each problem first, and then you'll be shown the correct answer.</p><p>After you complete each example, you will be able to choose what kind of example you want to see next. You'll see a set of buttons like this at the bottom of the page:</p><p>"+buttons+"</p><p>You can select mean, median, or mode by choosing buttons in the different columns. If you choose buttons in the first row, the next example will use the same story problem and either the same data or slightly modified data. If you choose buttons in the second row, the next example will use a completely different story problem and data.</p>",
+        "<h1>Instruction Section</h1><p>This section of the tutorial will explain to you more about the concepts of mean, median, and mode.</p>", "<h2>Mean</h2><p>The <strong>mean</strong> is the same as the <strong>average</strong>. To find the mean of a set of numbers, divide their sum by how many numbers there are.</p><p>For example, if the numbers are [ 10, 8, 8, 4, 5, 6, 8 ], then their sum is 49, and there are 7 numbers. So the mean is 49/7=7.</p>",
+        "<h2>Median</h2><p>The <strong>median</strong> of a set of numbers is the number that is in the middle when the numbers are put in order.</p><p>To find the median, put them in order and then look to see which number is in the middle.</p><p>For example, if the numbers are [ 10, 8, 8, 4, 5, 6, 8 ], when you put them in order you get [ 4, 5, 6, 8, 8, 8, 10 ]. The number in the middle is 8, so the median is 8.</p>",
+        "<h2>Mode</h2><p>The <strong>mode</strong> of a set of numbers is the number that appears most commonly.</p><p>To find the mode, just count how many times each number appears and find which one appears the most. It's easiest to do this if you put the numbers in order first.</p><p>For example, if the numbers are [ 10, 8, 8, 4, 5, 6, 8 ], when you put them in order you get [ 4, 5, 6, 8, 8, 8, 10 ]. 8 appears 3 times, more often than any other number, so the mode is 8.</p>",
+        "<h1>Practice Section</h1><p>In this section, you'll have a chance to practice the concepts you just learned.</p><p>You will see a series of practice problems for calculating mean, median, and mode. You'll have to answer each problem first, and then you'll be shown the correct answer.</p><p>After you complete each example, you will be able to choose what kind of example you want to see next. You'll see a set of buttons like this at the bottom of the page:</p><p>"+buttons+"</p><p>You can select mean, median, or mode by choosing buttons in the different columns. If you choose buttons in the first row, the next example will use the same story problem and either the same data or slightly modified data. If you choose buttons in the second row, the next example will use a completely different story problem and data.</p>",
         "<p>You will have to complete at least 5 examples of each type of problem, i.e. 15 total. At the top of the page, you'll see a table like this:</p><p>"+progbar+"</p><p>This will tell you how many problems you have finished already for each type. Once you've finished this minimum number, a 'Quit' button will appear which you can use to end the tutorial. However, you can do even more examples if you want - there's no limit!</p><p>OK, that's all! Click below to get started!"
     ];
+    if ( startExperiment_skip.instructions ) { instructions = []; }
     doSlideshow( display_loc, instructions, callback );
 }
 
@@ -130,6 +139,7 @@ function doRadioQuestion( display_loc, question, callback ) {
     }
     $("#submit_button").click( resp_func );
     $("#submit_button").focus();
+    window.scrollTo(0,0);
 }
 
 // doSlideshow
@@ -144,6 +154,7 @@ function doSlideshow( display_loc, content_array, callback ) {
         $("#continue_button").click( function() {
             doSlideshow( display_loc, content_array, callback ); } );
         $("#continue_button").focus();
+        window.scrollTo(0,0);
     }
 }
 
@@ -269,16 +280,26 @@ function doTrial( display_loc, callback ) {
         }
         var feedback_text = "<p>" + trial.feedback[ correct ] + "</p>";
         $('#feedback').html( feedback_text );
-		// add a class to feedback to indicate whether it is correct or not
-		if(correct) { $('#feedback').addClass('feedback_correct'); } else { $('#feedback').addClass('feedback_incorrect'); }
-		// show feedback and continue options
-        $('#feedback').fadeIn(500);
-        $('#continue').fadeIn(500);
+		// add a class to feedback to indicate whether it is correct or not,
+        // then show feedback and continue options,
+        // with longer delay after incorrect answers
+		if ( correct ) {
+            $('#feedback').addClass('feedback_correct');
+//            $('#feedback').fadeIn(500);
+//            $('#continue').fadeIn(500);
+            $('#continue').show();
+        } else {
+            $('#feedback').addClass('feedback_incorrect');
+//            $('#feedback').fadeIn(500);
+//            $('#continue').fadeIn(3500);
+            setTimeout( function() { $('#continue').show(); }, 3500 );
+        }
     } );
     // set option buttons to return the trial when clicked
     $('.option_buttons').click( function() { returnResult(Number(this.id.replace("option_button_",""))); } );
     // record start time
     var start_time = (new Date()).getTime();
+    window.scrollTo(0,0);
 }
 
 // TrialGenerator class
@@ -327,7 +348,7 @@ function getNextTrial( option_text ) {
     var storytxt    = "<p>" + story.text + "</p>";
     var datatxt     = this.getNewDataset(data_rel,story.min,story.max);
     var questxt     = "<p>Find the <em>" + cat + "</em> of the " + story.ques + ".</p>";
-    var content     = progbar + storytxt + datatxt + questxt;
+    var content     = "<h2>Your Progress</h2>" + progbar + "<h2>Current Problem</h2>" + storytxt + datatxt + questxt;
     var answer      = getCentTend(this.dataset,cat);
     var feedback    = getFeedback(this.dataset,cat);
     
@@ -366,7 +387,7 @@ function getNextTrial( option_text ) {
 }
 
 function getProgressBar() {
-    var bar = "<table border='1'><tr><td colspan='"+this.categories.length+"'>Your Progress</td></tr><tr>";
+    var bar = "<table border='1'><tr>"; // "<h2>Your Progress</h2><table border='1'><tr>";
     for ( var i=0; i<this.categories.length; i++ ) {
         bar += "<td><strong>"+this.categories[i]+":</strong><br>"+this.completes_tot[i]+" out of "+this.complete_targ+" complete</td>";
     }
@@ -596,24 +617,25 @@ function getCentTend( dataset, measure ) {
 }
 
 function getFeedback( dataset, measure ) {
-    var correct = "<img src='small-green-check-mark-th.png'>  " + " Yes, that's correct!";
-    var incorr  = "<img src='small-red-x-mark-th.png'>  " + " Oops, that's not correct.<br><br>";
+    var correct = "<p><img src='small-green-check-mark-th.png'>  " + " Yes, that's correct!</p>";
+    var incorr  = "<p><img src='small-red-x-mark-th.png'>  " + " Oops, that's not correct.</p>";
     switch ( measure ) {
         case "Mean":
             var s = getSum(dataset);
             var l = dataset.length;
-            incorr += "The sum of the numbers is " + s + " and there are " + l + " numbers. So the Mean is " + s + "/" + l + "=" + getMean(dataset) + ".";
+            incorr += "<p>The sum of the numbers is " + s + " and there are " + l + " numbers. So the Mean is " + s + "/" + l + "=" + getMean(dataset) + ".</p>";
             break;
         case "Median":
             var sorted = getSorted(dataset);
-            incorr += "If you put the numbers in order, you get " + sorted.toString() + ". Then the Median is just the middle number, which is " + getMedian(dataset) + ".";
+            incorr += "<p>If you put the numbers in order, you get " + sorted.toString() + ". Then the Median is just the middle number, which is " + getMedian(dataset) + ".</p>";
             break;
         case "Mode":
             var sorted = getSorted(dataset);
             var m = getMode(dataset);
-            incorr += "If you put the numbers in order, you get " + sorted.toString() + ". You can see that " + m + " appears " + getFrequency(m,dataset) + " times, more often than any other number. So the Mode is " + m + ".";
+            incorr += "<p>If you put the numbers in order, you get " + sorted.toString() + ". You can see that " + m + " appears " + getFrequency(m,dataset) + " times, more often than any other number. So the Mode is " + m + ".</p>";
             break;
     }
+    incorr += "<p>(The continue buttons will appear after several seconds.)</p>";
     return { false: incorr, true: correct };
 }
 

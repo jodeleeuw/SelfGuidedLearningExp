@@ -1,5 +1,7 @@
 h1 { font-family: Arial, Helvetica; font-size: 22px; border-bottom: 1px solid #ddd; padding-bottom: 10px; }
 
+h2 { font-family: Arial, Helvetica; font-size: 20px; border-bottom: 1px solid #ddd; padding-bottom: 5px; text-align: left }
+
 p { font-family: 'Palatino Linotype'; font-size: 18px; }
 
 table { font-family: 'Palatino Linotype'; font-size: 18px; width: 600px }
@@ -17,8 +19,9 @@ body { background-color: #7D110C; }
 #wrapper { width: 600px; margin: 40px auto 0px auto; padding: 20px; border: 10px solid #DED8BF; background-color: white; }
 
 #consent { width: 600px; text-align: left; margin-left:auto; margin-right: auto; background: white; font-family: 'Palatino Linotype', 'Book Antiqua', Palatino, FreeSerif, serif;}
-#consent h1, h2 { font-size: 16px; text-align: center; border: none;}
-#consent h2, h3 { font-size: 14px; }
+
+#consent h1, #consent h2 { font-size: 16px; text-align: center; border: none;}
+#consent h2, #consent h3 { font-size: 14px; }
 #consent p { font-size: 14px; }
 #consent .lead_right { text-align: right; font-size: 16px; }
 
