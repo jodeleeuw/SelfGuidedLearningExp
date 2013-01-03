@@ -8,7 +8,7 @@
 //  only referenced in main experiment structure
 var startExperiment_pretest_questions;
 var startExperiment_training_questions;
-var startExperiment_skip = { "pretest": true, "instructions": false };
+var startExperiment_skip = { "pretest": false, "instructions": false };
 
 // startExperiment: assign global vars and run pretest
 function startExperiment( display_loc, prepend_data, external_content ) {
@@ -215,7 +215,7 @@ TrialSpec = function( category, question, answer, feedback, options, data ) {
     this.doTrial    = doTrial;
 }
 
-// doTrial()
+// doTrial: method of TrialSpec class
 //  display this.text and this.question in display_loc, plus an area for text entry and a button
 //  button is disabled until something is entered into the text entry area
 //  when button is clicked, disappear it, display feedback and buttons based on this.options
@@ -285,13 +285,9 @@ function doTrial( display_loc, callback ) {
         // with longer delay after incorrect answers
 		if ( correct ) {
             $('#feedback').addClass('feedback_correct');
-//            $('#feedback').fadeIn(500);
-//            $('#continue').fadeIn(500);
             $('#continue').show();
         } else {
             $('#feedback').addClass('feedback_incorrect');
-//            $('#feedback').fadeIn(500);
-//            $('#continue').fadeIn(3500);
             setTimeout( function() { $('#continue').show(); }, 3500 );
         }
     } );
@@ -320,27 +316,34 @@ TrialGenerator = function( questions ) {
 //  given the option selected by user on previous trial, or "first trial" if there is no previous trial,
 //  generate TrialSpec object for the next trial
 function getNextTrial( option_text ) {
+
     // determine trial params: category index, story index, and relation of new dataset to previous dataset
+    // also, record category and data of previous trial for future reference
     var data_rel;
+    var prev_cat;
+    var prev_dataset;
     if ( option_text=="first trial" ) {
+        prev_cat        = "NA";
+        prev_dataset    = "NA";
         this.cat_idx    = 0;
         this.story_idx  = 0;
         data_rel        = "random";
     } else {
-        var cat = extractCategoryFromOptionText( option_text );
+        prev_cat     = this.categories[this.cat_idx];
+        prev_dataset = this.dataset;
         for ( var i=0; i<this.categories.length; i++ ) {
-            if ( this.categories[i]==cat ) {
+            if ( this.categories[i]==extractCategoryFromOptionText( option_text ) ) {
                 this.cat_idx = i;
             }
         }
-        var data_rel = extractRelationFromOptionText( option_text );
+        data_rel = extractRelationFromOptionText( option_text );
         if ( data_rel=="random" ) {
             // in this case, we are starting a new story problem, so increment the story index
             // this is a hack - it relies on knowledge that the data relation is random iff we start a new story problem
             this.story_idx = (this.story_idx + 1)%(this.stories.length);
         }
     }
-    
+        
     // generate actual HTML content to be shown to participant, except option buttons (see below)
     var progbar     = this.getProgressBar();
     var story       = this.stories[this.story_idx];
@@ -348,7 +351,13 @@ function getNextTrial( option_text ) {
     var storytxt    = "<p>" + story.text + "</p>";
     var datatxt     = this.getNewDataset(data_rel,story.min,story.max);
     var questxt     = "<p>Find the <em>" + cat + "</em> of the " + story.ques + ".</p>";
-    var content     = "<h2>Your Progress</h2>" + progbar + "<h2>Current Problem</h2>" + storytxt + datatxt + questxt;
+    var reminder = "";
+    if ( data_rel=="identical" ) {
+        reminder = "<p>(Remember, the <em>" + prev_cat + "</em> of this data was " + getCentTend(prev_dataset,prev_cat) + ".)</p>";
+    } else if ( data_rel=="modified" ) {
+        reminder = "<p>(Remember, the " + prev_cat + " of the previous data was " + getCentTend(prev_dataset,prev_cat) + ".)</p>";
+    }
+    var content     = "<h2>Your Progress</h2>" + progbar + "<h2>Current Problem</h2>" + storytxt + datatxt + questxt + reminder;
     var answer      = getCentTend(this.dataset,cat);
     var feedback    = getFeedback(this.dataset,cat);
     
@@ -382,7 +391,11 @@ function getNextTrial( option_text ) {
     
     // generate data to be recorded (as opposed to above "dataset" which is what is displayed to participant) and return trial specification
     // once we have more realistic content, we should add more detailed data, e.g. the actual correct answer.
-    var data        = {"storyidx":this.story_idx,"category":cat,"dataset":this.dataset.toString(),"answerkey":answer};
+    var data        = {
+        "prev_category": prev_cat, "prev_dataset": prev_dataset,
+        "prev_option_text": option_text, "prev_relation": extractRelationFromOptionText( option_text ),
+        "storyidx": this.story_idx, "category": cat, "dataset": this.dataset.toString(), "answerkey": answer
+    };
     return new TrialSpec( cat, content, answer, feedback, options, data );
 }
 
@@ -603,7 +616,7 @@ function extractDataFromOptionText( category, option_text ) {
     } else if ( data_relation=="random" ) {
         option_similarity = "unrelated";
     }
-    return { "option_type": option_type, "option_similarity": option_similarity };
+    return { "option_type": option_type, "option_relation": data_relation, "option_similarity": option_similarity };
 }
 
 function getCentTend( dataset, measure ) {
