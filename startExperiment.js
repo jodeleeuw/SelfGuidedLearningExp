@@ -8,7 +8,7 @@
 //  only referenced in main experiment structure
 var startExperiment_pretest_questions;
 var startExperiment_training_questions;
-var startExperiment_skip = { "pretest": true, "instructions": false };
+var startExperiment_skip = { "pretest": false, "instructions": false, "training": false };
 
 // startExperiment: assign global vars, randomize training questions, and run pretest
 function startExperiment( display_loc, prepend_data, external_content ) {
@@ -23,7 +23,7 @@ function doIntroduction( display_loc, prepend_data ) {
         doPretest( display_loc, prepend_data );
     }
     var introduction = [
-        "<p>The tutorial consists of 3 parts: a short test, instructions, and a set of practice problems. It should take about 30 minutes. Please do it all in one sitting - your work will not be saved if you close the page before finishing.</p><p><em>IMPORTANT:</em> During the tutorial, <em>DO NOT USE</em> your browser's 'Forward', 'Back', or 'Refresh' buttons. If you do, <em>all your work will be lost.</em></p><p>Click below to start.</p>",
+        "<p>The tutorial consists of 4 parts: a short test, instructions, a set of practice problems, and a few background questions. It should take about 30 minutes. Please do it all in one sitting - your work will not be saved if you close the page before finishing.</p><p><em>IMPORTANT:</em> During the tutorial, <em>DO NOT USE</em> your browser's 'Forward', 'Back', or 'Refresh' buttons. If you do, <em>all your work will be lost.</em></p><p>Click below to start.</p>",
         "<h1>Test Section</h1><p>In this section of the tutorial, you will take a short multiple choice test about mean, median, and mode.</p><p>The purpose of this test is to find out how much you already know about these concepts. So, please don't use any outside sources (books, friends, internet, calculator).</p><p>This test doesn't count towards your grade, but it's very similar to the test you'll receive later in class, which <strong>will</strong> count towards your grade. So this test is good practice for the real one.</p>"
     ];
     doSlideshow( display_loc, introduction, callback );
@@ -75,22 +75,56 @@ function doInstructions( display_loc, prepend_data ) {
     doSlideshow( display_loc, instructions, callback );
 }
 
-// doTraining: and then end the experiment
+// doTraining: and then go to background demographics
 function doTraining( display_loc, prepend_data ) {
     var callback = function( data ) {
-        endExperiment( display_loc, data );
+        //    display_loc.html( JSON.stringify( data ) );
+        doDemographics( display_loc, prepend_data );
     };
     var trial_generator = new TrialGenerator( startExperiment_training_questions );
-    iterateTrialGenerator( display_loc, prepend_data, trial_generator, 0, "first trial", [], callback );
+    if ( startExperiment_skip.training ) { 
+        callback( display_loc, prepend_data );
+    } else {
+        iterateTrialGenerator( display_loc, prepend_data, trial_generator, 0, "first trial", [], callback );
+    }
 }
 
+// doDemographics: and then end the experiment
+function doDemographics( display_loc, prepend_data ) {
+    var callback = function() {
+        endExperiment( display_loc );
+    }
+    var questions = [
+        { "number": 0,
+          "text": "<h1>Background Questions</h1><p>Congratulations! You're done with the tutorial. Finally, could you take a minute to answer a few questions about yourself?</p><p>This will just take a minute - honest!</p>" },
+        { "number": 1,
+          "text": "<p>Are you male or female?</p>",
+          "answers": [ "Male", "Female" ] },
+        { "number": 2,
+          "text": "<p>Using the following scale, rate <em>how much you enjoyed</em> the training you were just given:</p>",
+          "answers": [ "1 = extremely disliked", "2 = somewhat disliked", "3 = neutral", "4 = somewhat enjoyed", "5 = extremely enjoyed" ] },
+        { "number": 3,
+          "text": "<p>Using the following scale, rate <em>how useful to you</em> was the training you were just given:</p>",
+          "answers": [ "1 = not at all useful", "2 = not very useful", "3 = neutral", "4 = somewhat useful", "5 = extremely useful" ] },
+        { "number": 4,
+          "text": "<p>How much anxiety do you feel doing math?</p>",
+          "answers": [ "1 = low anxiety", "2 = slight anxiety", "3 = moderate anxiety", "4 = quite a bit of anxiety", "5 = high anxiety" ] },
+        { "number": 5,
+          "text": "<p>How much do you like math?</p>",
+          "answers": [ "1 = I hate math", "2 = I don't like math", "3 = I feel neutral", "4 = I like math", "5 = I like math a lot" ] },
+        { "number": 6,
+          "text": "<p>Before this training, how much did you already know about how to calculate means, medians, and modes?</p>",
+          "answers": [ "1 = I didn't know at all", "2 = I didn't know very much", "3 = I knew a little", "4 = I knew somewhat", "5 = I knew very well" ] }
+    ];
+    doRadioSurvey( questions, "demographicdata", display_loc, prepend_data, callback );
+}    
+          
 // endExperiment: records completion data and displays completion message
 /*
 TBD (Josh?/David): right now this just displays the accumulated data so we know it's working. Eventually we need it to close down gracefully, possibly saving some info about completion to database (Josh?) and display a nice message to the participant (David).
 */
-function endExperiment( display_loc, data ) {
-    display_loc.html( JSON.stringify( data ) );
-//    display_loc.html( "<p>The tutorial is now complete and your data has been recorded. Thank you for your participation! You may now close this browser window.</p>" );
+function endExperiment( display_loc ) {
+    display_loc.html( "<p>The tutorial is now complete and your data has been recorded. Thank you for your participation! You may now close this browser window.</p>" );
 }
 
 
@@ -142,7 +176,7 @@ function doRadioQuestion( display_loc, question, callback ) {
     display_loc.html( content );
     resp_func = function(e) {
         e.preventDefault();
-        if ( question.answers != undefined ) {
+        if ( ( question.answers != undefined ) && ( question.key != undefined ) ) {
             var response = $('input[name=radio_option]:checked').val();
             if ( response == undefined ) {
                 alert( "Please select an answer before proceeding." );
@@ -151,6 +185,15 @@ function doRadioQuestion( display_loc, question, callback ) {
                 $("#question_form").unbind("submit",resp_func);
                 callback( { "number": question.number, "key": question.key, "response": response, "correct": (question.key==question.response) } );
             }
+        } else if ( question.answers != undefined ) {
+            var response = $('input[name=radio_option]:checked').val();
+            if ( response == undefined ) {
+                alert( "Please select an answer before proceeding." );
+            } else {
+                display_loc.html( "" );
+                $("#question_form").unbind("submit",resp_func);
+                callback( { "number": question.number, "response": response } );
+            }        
         } else {
             display_loc.html( "" );
             $("#question_form").unbind("submit",resp_func);
