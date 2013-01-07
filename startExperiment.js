@@ -78,7 +78,7 @@ function doInstructions( display_loc, prepend_data ) {
 // doTraining: and then go to background demographics
 function doTraining( display_loc, prepend_data ) {
     var callback = function( data ) {
-        //    display_loc.html( JSON.stringify( data ) );
+           // display_loc.html( JSON.stringify( data ) );
         doDemographics( display_loc, prepend_data );
     };
     var trial_generator = new TrialGenerator( startExperiment_training_questions );
@@ -174,6 +174,7 @@ function doRadioQuestion( display_loc, question, callback ) {
         content += "<br><input type='submit' id='submit_button' name='submit_button' value='Continue'></form>";
     }
     display_loc.html( content );
+    var start_time = new Date();
     resp_func = function(e) {
         e.preventDefault();
         if ( ( question.answers != undefined ) && ( question.key != undefined ) ) {
@@ -182,8 +183,9 @@ function doRadioQuestion( display_loc, question, callback ) {
                 alert( "Please select an answer before proceeding." );
             } else {
                 display_loc.html( "" );
+                var end_time = new Date();
                 $("#question_form").unbind("submit",resp_func);
-                callback( { "number": question.number, "key": question.key, "response": response, "correct": (question.key==question.response) } );
+                callback( { "number": question.number, "rt": end_time.getTime()-start_time.getTime(), "start": start_time.toString(), "end": end_time.toString(), "key": question.key, "response": response, "correct": (question.key==question.response) } );
             }
         } else if ( question.answers != undefined ) {
             var response = $('input[name=radio_option]:checked').val();
@@ -192,12 +194,12 @@ function doRadioQuestion( display_loc, question, callback ) {
             } else {
                 display_loc.html( "" );
                 $("#question_form").unbind("submit",resp_func);
-                callback( { "number": question.number, "response": response } );
+                callback( { "number": question.number, "rt": end_time.getTime()-start_time.getTime(), "start": start_time.toString(), "end": end_time.toString(), "response": response } );
             }        
         } else {
             display_loc.html( "" );
             $("#question_form").unbind("submit",resp_func);
-            callback( { "number": question.number } );
+            callback( { "number": question.number, "rt": end_time.getTime()-start_time.getTime(), "start": start_time.toString(), "end": end_time.toString()  } );
         }
     }
     $("#submit_button").click( resp_func );
@@ -289,9 +291,9 @@ function doTrial( display_loc, callback ) {
     var correct;
     var returnResult = function( i ) {
         display_loc.html('');
-        // pause?
+        var end_time = new Date();
         callback($.extend({},trial.data,
-            {"response":response,"correct":correct,"rt":(new Date()).getTime()-start_time,"option":i,"option_text":trial.options[i]},
+            {"response":response,"correct":correct,"rt":end_time.getTime()-start_time.getTime(),"start": start_time.toString(), "end": end_time.toString(), "option":i,"option_text":trial.options[i]},
             extractDataFromOptionText( trial.category, trial.options[i] ) ) );
     }
     // content that will go into the page
@@ -358,7 +360,7 @@ function doTrial( display_loc, callback ) {
     // set option buttons to return the trial when clicked
     $('.option_buttons').click( function() { returnResult(Number(this.id.replace("option_button_",""))); } );
     // record start time
-    var start_time = (new Date()).getTime();
+    var start_time = new Date();
     window.scrollTo(0,0);
 }
 
