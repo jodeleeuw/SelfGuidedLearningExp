@@ -8,13 +8,25 @@
 //  only referenced in main experiment structure
 var startExperiment_pretest_questions;
 var startExperiment_training_questions;
-var startExperiment_skip = { "pretest": false, "instructions": false };
+var startExperiment_skip = { "pretest": true, "instructions": true };
 
 // startExperiment: assign global vars and run pretest
 function startExperiment( display_loc, prepend_data, external_content ) {
     startExperiment_pretest_questions   = external_content.pretest_questions;
     startExperiment_training_questions  = external_content.training_questions;
-    doPretest( display_loc, prepend_data );
+    doIntroduction( display_loc, prepend_data );
+}
+
+// doIntroduction: and then pretest
+function doIntroduction( display_loc, prepend_data ) {
+    var callback = function() {
+        doPretest( display_loc, prepend_data );
+    }
+    var introduction = [
+        "<p>The tutorial consists of 3 parts: a short test, instructions, and a set of practice problems. It should take about 30 minutes. Please do it all in one sitting - your work will not be saved if you close the page before finishing.</p><p><em>IMPORTANT:</em> During the tutorial, <em>DO NOT USE</em> your browser's 'Forward', 'Back', or 'Refresh' buttons. If you do, <em>all your work will be lost.</em></p><p>Click below to start.</p>",
+        "<h1>Test Section</h1><p>In this section of the tutorial, you will take a short multiple choice test about mean, median, and mode.</p><p>The purpose of this test is to find out how much you already know about these concepts. So, please don't use any outside sources (books, friends, internet, calculator).</p><p>This test doesn't count towards your grade, but it's very similar to the test you'll receive later in class, which <strong>will</strong> count towards your grade. So this test is good practice for the real one.</p>"
+    ];
+    doSlideshow( display_loc, introduction, callback );
 }
 
 // doPretest: and then show training instructions
@@ -22,10 +34,11 @@ function doPretest( display_loc, prepend_data ) {
     var callback = function() {
         doInstructions( display_loc, prepend_data );
     };
-    var questions = [
-        { "number": 0, "text": "<h1>Test Section</h1><p>In this section of the tutorial, you will take a short multiple choice test about mean, median, and mode.</p><p>The purpose of this test is to find out how much you already know about these concepts. So, please don't use any outside sources (books, friends, internet, calculator).</p><p>This test doesn't count towards your grade, but it's very similar to the test you'll receive later in class, which <strong>will</strong> count towards your grade. So this test is good practice for the real one.</p><p>Click below to start!</p>" }
-    ].concat( startExperiment_pretest_questions );
-    if ( startExperiment_skip.pretest ) { questions = []; }
+    if ( startExperiment_skip.pretest ) {
+        var questions = []; 
+    } else {
+        var questions = startExperiment_pretest_questions;
+    }
     doRadioSurvey( questions, "pretestdata", display_loc, prepend_data, callback );
 }
 
@@ -47,7 +60,7 @@ function doInstructions( display_loc, prepend_data ) {
         "</tr></table>";
     var instructions = [
         "<h1>Instruction Section</h1><p>This section of the tutorial will explain to you more about the concepts of mean, median, and mode.</p>", "<h2>Mean</h2><p>The <strong>mean</strong> is the same as the <strong>average</strong>. To find the mean of a set of numbers, divide their sum by how many numbers there are.</p><p>For example, if the numbers are [ 10, 8, 8, 4, 5, 6, 8 ], then their sum is 49, and there are 7 numbers. So the mean is 49/7=7.</p>",
-        "<h2>Median</h2><p>The <strong>median</strong> of a set of numbers is the number that is in the middle when the numbers are put in order.</p><p>To find the median, put them in order and then look to see which number is in the middle.</p><p>For example, if the numbers are [ 10, 8, 8, 4, 5, 6, 8 ], when you put them in order you get [ 4, 5, 6, 8, 8, 8, 10 ]. The number in the middle is 8, so the median is 8.</p>",
+        "<h2>Median</h2><p>The <strong>median</strong> of a set of numbers is the number that is in the middle when the numbers are put in order.</p><p>To find the median, put them in order and then look to see which number is in the middle. If there are an even number of numbers, so there are two numbers in the middle, then take the average of those two numbers.</p><p>For example, if the numbers are [ 10, 8, 8, 4, 5, 6, 8 ], when you put them in order you get [ 4, 5, 6, 8, 8, 8, 10 ]. The number in the middle is 8, so the median is 8.</p>",
         "<h2>Mode</h2><p>The <strong>mode</strong> of a set of numbers is the number that appears most commonly.</p><p>To find the mode, just count how many times each number appears and find which one appears the most. It's easiest to do this if you put the numbers in order first.</p><p>For example, if the numbers are [ 10, 8, 8, 4, 5, 6, 8 ], when you put them in order you get [ 4, 5, 6, 8, 8, 8, 10 ]. 8 appears 3 times, more often than any other number, so the mode is 8.</p>",
         "<h1>Practice Section</h1><p>In this section, you'll have a chance to practice the concepts you just learned.</p><p>You will see a series of practice problems for calculating mean, median, and mode. You'll have to answer each problem first, and then you'll be shown the correct answer.</p><p>After you complete each example, you will be able to choose what kind of example you want to see next. You'll see a set of buttons like this at the bottom of the page:</p><p>"+buttons+"</p><p>You can select mean, median, or mode by choosing buttons in the different columns. If you choose buttons in the first row, the next example will use the same story problem and either the same data or slightly modified data. If you choose buttons in the second row, the next example will use a completely different story problem and data.</p>",
         "<p>You will have to complete at least 5 examples of each type of problem, i.e. 15 total. At the top of the page, you'll see a table like this:</p><p>"+progbar+"</p><p>This will tell you how many problems you have finished already for each type. Once you've finished this minimum number, a 'Quit' button will appear which you can use to end the tutorial. However, you can do even more examples if you want - there's no limit!</p><p>OK, that's all! Click below to get started!"
@@ -70,7 +83,8 @@ function doTraining( display_loc, prepend_data ) {
 TBD (Josh?/David): right now this just displays the accumulated data so we know it's working. Eventually we need it to close down gracefully, possibly saving some info about completion to database (Josh?) and display a nice message to the participant (David).
 */
 function endExperiment( display_loc, data ) {
-    display_loc.html( JSON.stringify( data ) );
+//    display_loc.html( JSON.stringify( data ) );
+    display_loc.html( "<p>The tutorial is now complete and your data has been recorded. Thank you for your participation! You may now close this browser window.</p>" );
 }
 
 
@@ -195,7 +209,7 @@ function iterateTrialGenerator( display_loc, prepend_data, trial_generator, iter
 						console.log(d);
 						iterateTrialGenerator( display_loc, prepend_data, trial_generator, iter_num+1, data.option_text, accum_data, callback );
 /*
-TBD (David): eventually something useful should happen on error, but at least now it will run without record_data.php
+TBD (David): eventually something useful should happen on error, but at least now it will run without submit_data_mysql.php
 */
                     }
                 } );
@@ -442,6 +456,9 @@ function generateDataset( min, max ) {
         } while ((length%2)==0);
         // we happen to know that isDatasetNice always returns false if length is even,
         // so we can save time by rejecting these right away even though isDatasetNice would catch them in the end
+        /*
+        length = 5 + Math.floor(Math.random()*5);
+        */
         for ( var i=0; i<length; i++ ) {
             dataset.push( randRange(min,max) );
         }
@@ -449,13 +466,14 @@ function generateDataset( min, max ) {
     return dataset;
 }
 
-// isDatasetNice: given an array of integers, checks whether 
-//  - the mean is an integer,
-//  - the median is well-defined (i.e. no averaging required),
-//  - and the mode is well-defined (i.e. only one "most common" number)
+// isDatasetNice: given an array of integers,
+//  checks whether the mean, median, and mode are easily calculated and unambiguous
 function isDatasetNice( ds ) {
-    var naughty = (getMean(ds)===false) || (getMedian(ds)===false) || (getMode(ds)===false);
-    return (!naughty);
+    var dsmean  = getMean(ds);
+    return     ( dsmean==Math.floor(dsmean) )   // mean is an integer
+            && ( getMedian(ds) )                // median is unambiguous
+            && ( getMode(ds) )                  // mode is unambiguous
+            ;
 }
 
 // stringifyDataset: given an array of integers,
@@ -470,20 +488,24 @@ function stringifyDataset( ds ) {
 }
 
 // modifyAndStringifyDataset: given an array of numbers,
-//  adds or removes two numbers to the array and returns
+//  adds or removes two or three numbers and returns
 //  (1) the modified array, and
 //  (2) an HTML text version thereof with changes relative to the original dataset marked and explained
 function modifyAndStringifyDataset( ds, min, max ) {
     var changetype;
-    if ( ds.length >= 8 ) {
+    if ( ds.length >= 7 ) {
         changetype = "remove";
-    } else if ( ds.length <= 6 ) {
+    } else if ( ds.length <= 5 ) {
         changetype = "add";
     } else {
         changetype = ["remove","add"][Math.floor(Math.random()*2)];
     }
     var del_num=2;
     var ins_num=2;
+    /*
+    var del_num = Math.floor( Math.random()*2 ) + 2;
+    var ins_num = Math.floor( Math.random()*2 ) + 2;
+    */
     var del_idxs;
     var arr;
     var txt;
@@ -666,18 +688,9 @@ function getSum(a) {
     }
 }
 
-// getMean( a ) : return the integer mean of an array of numbers, or false if the mean is not an integer
+// getMean( a ) : return the integer mean of an array of numbers
 function getMean(a) {
-    if (a.length==0) {
-        return false;
-    } else {
-        var m = getSum(a)/a.length;
-        if ( m == Math.floor(m) ) {
-            return m;
-        } else {
-            return false;
-        }
-    }
+    return getSum(a)/a.length;
 }
 
 // getSorted( a ) : return an array with the same elements as an array of numbers a, sorted from small to large
@@ -685,12 +698,19 @@ function getSorted(a) {
     return (a.slice()).sort(function(a,b){return a-b});
 }
 
-// getMedian( a ) : return the median of an array of numbers, or false if the array has an even number of numbers
+// getMedian( a ) : return the median of an array of numbers, or false if the array has an ambiguous median (i.e. two different central numbers)
 function getMedian(a) {
-    if (((a.length)%2)==0) {
-        return false;
-    } else {
+    if (((a.length)%2)==1) {
         return getSorted(a)[ (a.length-1)/2 ];
+    } else {
+        var l = getSorted(a);
+        var x = l[(a.length/2)-1];
+        var y = l[(a.length/2)];
+        if (x==y) {
+            return x;
+        } else {
+            return false;
+        }
     }
 }
 
@@ -704,7 +724,6 @@ function getFrequency(n,a) {
 }
 
 // getMode( a ) : return the mode of an array of numbers, or false if there is more than one mode, or the array is empty
-//  eventually rewrite this to use getFrequency, if you have time
 function getMode(a) {
     if (a.length==0) {
         return false;
