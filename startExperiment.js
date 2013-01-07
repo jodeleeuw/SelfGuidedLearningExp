@@ -10,10 +10,10 @@ var startExperiment_pretest_questions;
 var startExperiment_training_questions;
 var startExperiment_skip = { "pretest": true, "instructions": true };
 
-// startExperiment: assign global vars and run pretest
+// startExperiment: assign global vars, randomize training questions, and run pretest
 function startExperiment( display_loc, prepend_data, external_content ) {
     startExperiment_pretest_questions   = external_content.pretest_questions;
-    startExperiment_training_questions  = external_content.training_questions;
+    startExperiment_training_questions  = shuffle( external_content.training_questions.slice(0,external_content.training_questions.length) );
     doIntroduction( display_loc, prepend_data );
 }
 
@@ -60,7 +60,7 @@ function doInstructions( display_loc, prepend_data ) {
         "</tr></table>";
     var instructions = [
         "<h1>Instruction Section</h1><p>This section of the tutorial will explain to you more about the concepts of mean, median, and mode.</p>", "<h2>Mean</h2><p>The <strong>mean</strong> is the same as the <strong>average</strong>. To find the mean of a set of numbers, divide their sum by how many numbers there are.</p><p>For example, if the numbers are [ 10, 8, 8, 4, 5, 6, 8 ], then their sum is 49, and there are 7 numbers. So the mean is 49/7=7.</p>",
-        "<h2>Median</h2><p>The <strong>median</strong> of a set of numbers is the number that is in the middle when the numbers are put in order.</p><p>To find the median, put them in order and then look to see which number is in the middle. If there are an even number of numbers, so there are two numbers in the middle, then take the average of those two numbers.</p><p>For example, if the numbers are [ 10, 8, 8, 4, 5, 6, 8 ], when you put them in order you get [ 4, 5, 6, 8, 8, 8, 10 ]. The number in the middle is 8, so the median is 8.</p>",
+        "<h2>Median</h2><p>The <strong>median</strong> of a set of numbers is the number that is in the middle when the numbers are put in order.</p><p>To find the median, put them in order and then look to see which number is in the middle.</p><p>For example, if the numbers are [ 10, 8, 8, 4, 5, 6, 8 ], when you put them in order you get [ 4, 5, 6, 8, 8, 8, 10 ]. The number in the middle is 8, so the median is 8.</p>",
         "<h2>Mode</h2><p>The <strong>mode</strong> of a set of numbers is the number that appears most commonly.</p><p>To find the mode, just count how many times each number appears and find which one appears the most. It's easiest to do this if you put the numbers in order first.</p><p>For example, if the numbers are [ 10, 8, 8, 4, 5, 6, 8 ], when you put them in order you get [ 4, 5, 6, 8, 8, 8, 10 ]. 8 appears 3 times, more often than any other number, so the mode is 8.</p>",
         "<h1>Practice Section</h1><p>In this section, you'll have a chance to practice the concepts you just learned.</p><p>You will see a series of practice problems for calculating mean, median, and mode. You'll have to answer each problem first, and then you'll be shown the correct answer.</p><p>After you complete each example, you will be able to choose what kind of example you want to see next. You'll see a set of buttons like this at the bottom of the page:</p><p>"+buttons+"</p><p>You can select mean, median, or mode by choosing buttons in the different columns. If you choose buttons in the first row, the next example will use the same story problem and either the same data or slightly modified data. If you choose buttons in the second row, the next example will use a completely different story problem and data.</p>",
         "<p>You will have to complete at least 5 examples of each type of problem, i.e. 15 total. At the top of the page, you'll see a table like this:</p><p>"+progbar+"</p><p>This will tell you how many problems you have finished already for each type. Once you've finished this minimum number, a 'Quit' button will appear which you can use to end the tutorial. However, you can do even more examples if you want - there's no limit!</p><p>OK, that's all! Click below to get started!"
@@ -83,8 +83,8 @@ function doTraining( display_loc, prepend_data ) {
 TBD (Josh?/David): right now this just displays the accumulated data so we know it's working. Eventually we need it to close down gracefully, possibly saving some info about completion to database (Josh?) and display a nice message to the participant (David).
 */
 function endExperiment( display_loc, data ) {
-//    display_loc.html( JSON.stringify( data ) );
-    display_loc.html( "<p>The tutorial is now complete and your data has been recorded. Thank you for your participation! You may now close this browser window.</p>" );
+    display_loc.html( JSON.stringify( data ) );
+//    display_loc.html( "<p>The tutorial is now complete and your data has been recorded. Thank you for your participation! You may now close this browser window.</p>" );
 }
 
 
@@ -302,7 +302,8 @@ function doTrial( display_loc, callback ) {
             $('#continue').show();
         } else {
             $('#feedback').addClass('feedback_incorrect');
-            setTimeout( function() { $('#continue').show(); }, 3500 );
+//            setTimeout( function() { $('#continue').show(); }, 3500 );
+            setTimeout( function() { $('#continue').show(); }, 1 );
         }
     } );
     // set option buttons to return the trial when clicked
@@ -408,7 +409,7 @@ function getNextTrial( option_text ) {
     var data        = {
         "prev_category": prev_cat, "prev_dataset": prev_dataset,
         "prev_option_text": option_text, "prev_relation": extractRelationFromOptionText( option_text ),
-        "storyidx": this.story_idx, "category": cat, "dataset": this.dataset.toString(), "answerkey": answer
+        "storyidx": this.stories[this.story_idx].prbID, "category": cat, "dataset": this.dataset.toString(), "answerkey": answer
     };
     return new TrialSpec( cat, content, answer, feedback, options, data );
 }
@@ -493,9 +494,9 @@ function stringifyDataset( ds ) {
 //  (2) an HTML text version thereof with changes relative to the original dataset marked and explained
 function modifyAndStringifyDataset( ds, min, max ) {
     var changetype;
-    if ( ds.length >= 7 ) {
+    if ( ds.length >= 8 ) {
         changetype = "remove";
-    } else if ( ds.length <= 5 ) {
+    } else if ( ds.length <= 6 ) {
         changetype = "add";
     } else {
         changetype = ["remove","add"][Math.floor(Math.random()*2)];
