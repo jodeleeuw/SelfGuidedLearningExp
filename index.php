@@ -12,7 +12,7 @@ $authenticated = $_SESSION['CAS'];
 //send user to CAS login if not authenticated
 if (!$authenticated) {
   $_SESSION['CAS'] = true;
-  header("Location: https://cas.iu.edu/cas/login?cassvc=IU&casurl=http://perceptsconcepts.psych.indiana.edu/experiments/p101/");
+  header("Location: https://cas.iu.edu/cas/login?cassvc=IU&casurl=http://perceptsconcepts.psych.indiana.edu/experiments/mmm-tutorial/");
   exit;
 }
 
@@ -22,7 +22,7 @@ if ($authenticated) {
 	//set up validation URL to ask CAS if ticket is good
 	$_url = 'https://cas.iu.edu/cas/validate';
 	$cassvc = 'IU';  //search kb.indiana.edu for "cas application code" to determine code to use here in place of "appCode"
-	$casurl = 'http://perceptsconcepts.psych.indiana.edu/experiments/p101/'; //same base URLsent
+	$casurl = 'http://perceptsconcepts.psych.indiana.edu/experiments/mmm-tutorial/'; //same base URLsent
 	$params = "cassvc=$cassvc&casticket=$_GET[casticket]&casurl=$casurl";
 	$urlNew = "$_url?$params";
 
@@ -52,7 +52,7 @@ if ($authenticated) {
   else
   {
      $_SESSION['CAS'] = true;
-     header("Location: https://cas.iu.edu/cas/login?cassvc=IU&casurl=http://perceptsconcepts.psych.indiana.edu/experiments/p101/");
+     header("Location: https://cas.iu.edu/cas/login?cassvc=IU&casurl=http://perceptsconcepts.psych.indiana.edu/experiments/mmm-tutorial/");
      exit;
   }
 }
