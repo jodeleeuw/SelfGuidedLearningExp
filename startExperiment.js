@@ -442,7 +442,7 @@ function doTrial( display_loc, callback ) {
                 correct = false;
             } else {
                 response = Number( response );
-                correct = ( response==trial.answer );
+                correct = ( Math.abs(response-trial.answer)<=0.11 );
             }
             var feedback_text = "<p>" + trial.feedback[ correct ] + "</p>";
             $('#feedback').html( feedback_text );
@@ -476,7 +476,7 @@ TrialGenerator = function( questions ) {
     for ( var i=0; i<this.categories.length; i++ ) { this.completes_tot[i] = 0; }
     this.getNextTrial       = getNextTrial;
     this.getOptionsText     = getOptionsText;
-    this.getNewDataset      = getNewDataset;
+    this.getNextDataset      = getNextDataset;
     this.getProgressBar     = getProgressBar;
 }
 
@@ -517,8 +517,12 @@ function getNextTrial( option_text ) {
     var story       = this.stories[this.story_idx];
     var cat         = this.categories[this.cat_idx];
     var storytxt    = "<p>" + story.text + "</p>";
-    var datatxt     = this.getNewDataset(data_rel,story.min,story.max);
-    var questxt     = "<p>Find the <em>" + cat + "</em> of the " + story.ques + ".</p>";
+    var datatxt     = this.getNextDataset(data_rel,story.min,story.max);
+    if ( cat=="Mean" ) {
+        var questxt = "<p>Find the <em>Mean</em> of the " + story.ques + ". (Round off decimals to two decimal places.)</p>";
+    } else {
+        var questxt     = "<p>Find the <em>" + cat + "</em> of the " + story.ques + ".</p>";
+    }
     var reminder = "";
     if ( data_rel=="identical" ) {
         reminder = "<p>(Remember, the <em>" + prev_cat + "</em> of this data was " + getCentTend(prev_dataset,prev_cat) + ".)</p>";
@@ -576,63 +580,30 @@ function getProgressBar() {
     return bar;
 }
 
-// getNewDataset: method of TrialGenerator class
+// getNextDataset: method of TrialGenerator class
 //  generates a new data set, records it in the TrialGenerator's dataset property, and returns an HTML text version thereof
 //  if relation is random, new data is completely random within constraints of current value of this.story
 //  if relation is identical, new data is same as old data
 //  if relation is related, new data is a tweak of old data with changes highlighted in the HTML
-function getNewDataset( relation, min, max ) {
+function getNextDataset( relation, min, max ) {
     if ( relation=="random" ) {
-        var dataset = generateDataset( min, max );
-        var result  = stringifyDataset( dataset );
+        var dataset = generateNewDataset( min, max );
+        var result  = stringifyNewDataset( dataset );
     } else if ( relation=="identical" ) {
         var dataset = this.dataset;
-        var result  = stringifyDataset( dataset );
+        var result  = stringifyNewDataset( dataset );
     } else if ( relation=="modified" ) {
-        var R   = modifyAndStringifyDataset( this.dataset, min, max );
-        dataset = R["array"];
-        result  = R["text"];
+        var old_dataset = this.dataset.slice(0,this.dataset.length);
+        var dataset     = generateModifiedDataset( old_dataset, min, max );
+        var result      = stringifyModifiedDataset( dataset, old_dataset );
     }
     this.dataset = dataset;
     return result;
 }
 
-// generateDataset: given a min and max,
-//  generates an array of 5-9 integers between min and max inclusive,
-//  for which isDatasetNice returns true
-function generateDataset( min, max ) {
-    var dataset;
-    var length;
-    do {
-        dataset = [];
-        do {
-            length = 5 + Math.floor(Math.random()*5);
-        } while ((length%2)==0);
-        // we happen to know that isDatasetNice always returns false if length is even,
-        // so we can save time by rejecting these right away even though isDatasetNice would catch them in the end
-        /*
-        length = 5 + Math.floor(Math.random()*5);
-        */
-        for ( var i=0; i<length; i++ ) {
-            dataset.push( randRange(min,max) );
-        }
-    } while (!isDatasetNice(dataset));
-    return dataset;
-}
-
-// isDatasetNice: given an array of integers,
-//  checks whether the mean, median, and mode are easily calculated and unambiguous
-function isDatasetNice( ds ) {
-    var dsmean  = getMean(ds);
-    return     ( dsmean==Math.floor(dsmean) )   // mean is an integer
-            && ( getMedian(ds) )                // median is unambiguous
-            && ( getMode(ds) )                  // mode is unambiguous
-            ;
-}
-
-// stringifyDataset: given an array of integers,
+// stringifyNewDataset: given an array of integers,
 //  returns an HTML string version of the same
-function stringifyDataset( ds ) {
+function stringifyNewDataset( ds ) {
     var result = "<p>Data set: ";
     for ( var i=0; i<ds.length; i++ ) {
         result += ds[i] + ", ";
@@ -641,75 +612,33 @@ function stringifyDataset( ds ) {
     return result;
 }
 
-// modifyAndStringifyDataset: given an array of numbers,
-//  adds or removes two or three numbers and returns
-//  (1) the modified array, and
-//  (2) an HTML text version thereof with changes relative to the original dataset marked and explained
-function modifyAndStringifyDataset( ds, min, max ) {
-    var changetype;
-    if ( ds.length >= 8 ) {
-        changetype = "remove";
-    } else if ( ds.length <= 6 ) {
-        changetype = "add";
-    } else {
-        changetype = ["remove","add"][Math.floor(Math.random()*2)];
-    }
-    var del_num=2;
-    var ins_num=2;
-    /*
-    var del_num = Math.floor( Math.random()*2 ) + 2;
-    var ins_num = Math.floor( Math.random()*2 ) + 2;
-    */
-    var del_idxs;
-    var arr;
-    var txt;
-    var els;
-    do {
-        if ( changetype=="remove" ) {
-            del_idxs = randomSubsetIdxs( ds, del_num );
-            arr = [];
-            txt = "<p>Data set: ";
-            for ( var i=0; i<ds.length; i++ ) {
-                if ( del_idxs.indexOf(i)>-1 ) {
-                    txt += "<del>" + ds[i] + "</del>, ";
-                } else {
-                    arr.push(ds[i]);
-                    txt += ds[i] + ", ";
-                }
-            }
-            txt = txt.substring(0,txt.length-2) + "</p>";
-            txt += "<p>(The numbers ";
-            for ( var i=0; i<ds.length; i++ ) {
-                if ( del_idxs.indexOf(i)>-1 ) {
-                    txt += ds[i] + ", ";
-                }
-            }
-            txt = txt.substring(0,txt.length-2);
-            txt += " were removed from the data.)</p>";
-        } else if ( changetype=="add" ) {
-            arr = [];
-            txt = "<p>Data set: ";
-            for ( var i=0; i<ds.length; i++ ) {
-                arr.push(ds[i]);
-                txt += ds[i] + ", ";
-            }
-            els=[];
-            for ( var i=0; i<ins_num; i++ ) {
-                els.push( randRange(min,max) );
-                arr.push(els[i]);
-                txt += "<ins>" + els[i] + "</ins>, ";
-            }
-            txt = txt.substring(0,txt.length-2) + "</p>";
-            txt = txt.substring(0,txt.length-2) + "</p>";
-            txt += "<p>(The numbers ";
-            for ( var i=0; i<els.length; i++ ) {
-                txt += els[i] + ", ";
-            }
-            txt = txt.substring(0,txt.length-2);
-            txt += " were added to the data.)</p>";
+function stringifyModifiedDataset( new_ds, old_ds ) {
+    var result  = "<p>Data set: ";
+    var x       = createChangeRecord( old_ds, new_ds );
+    var arr     = x.combined_array;
+    var chgs    = x.change_record;
+    var type    = x.change_type;
+    var els     = [];
+    for ( var i=0; i<arr.length; i++ ) {
+        if ( chgs[i]=="none" ) {
+            result += arr[i] + ", ";
+        } else if ( chgs[i]=="ins" ) {
+            result += "<ins>" + arr[i] + "</ins>, ";
+            els.push( arr[i] );
+        } else if ( chgs[i]=="del" ) {
+            result += "<del>" + arr[i] + "</del>, ";
+            els.push( arr[i] );
         }
-    } while (!isDatasetNice(arr));
-    return { "array": arr, "text": txt };
+    }
+    result = result.substring(0,result.length-2) + "</p>";
+    if ( type=="insertion" ) {
+        result += "<p>(The numbers " + els[0] + " and " + els[1] + " were added.)</p>";
+    } else if ( type=="deletion") {
+        result += "<p>(The numbers " + els[0] + " and " + els[1] + " were removed.)</p>";
+    } else if ( type=="substitution" ) {
+        result += "<p>(The number " + els[0] + " was replaced with " + els[1] + ".)</p>";
+    }
+    return result;
 }
 
 // getOptionsText: method of TrialGenerator object
@@ -797,7 +726,9 @@ function extractDataFromOptionText( category, option_text ) {
 
 function getCentTend( dataset, measure ) {
     if ( measure=="Mean" ) {
-        return getMean( dataset );
+        var x = getMean( dataset );
+        x = Math.round( x*100 ) / 100;
+        return x;
     } else if ( measure=="Median" ) {
         return getMedian( dataset );
     } else if ( measure=="Mode" ) {
@@ -812,20 +743,298 @@ function getFeedback( dataset, measure ) {
         case "Mean":
             var s = getSum(dataset);
             var l = dataset.length;
-            incorr += "<p>The sum of the numbers is " + s + " and there are " + l + " numbers. So the Mean is " + s + "/" + l + "=" + getMean(dataset) + ".</p>";
+            incorr += "<p>The sum of the numbers is " + s + " and there are " + l + " numbers. So the Mean is " + s + "/" + l + "=" + getCentTend( dataset, measure ) + ".</p>";
             break;
         case "Median":
             var sorted = getSorted(dataset);
-            incorr += "<p>If you put the numbers in order, you get " + sorted.toString() + ". Then the Median is just the middle number, which is " + getMedian(dataset) + ".</p>";
+            incorr += "<p>If you put the numbers in order, you get " + sorted.toString() + ". Then the Median is just the middle number, which is " + getCentTend( dataset, measure ) + ".</p>";
             break;
         case "Mode":
             var sorted = getSorted(dataset);
-            var m = getMode(dataset);
+            var m = getCentTend( dataset, measure );
             incorr += "<p>If you put the numbers in order, you get " + sorted.toString() + ". You can see that " + m + " appears " + getFrequency(m,dataset) + " times, more often than any other number. So the Mode is " + m + ".</p>";
             break;
     }
     incorr += "<p>(The continue buttons will appear after several seconds.)</p>";
     return { false: incorr, true: correct };
+}
+
+
+//////////////////////////////////////////////////////////////////////
+// dataset generation and modification
+//////////////////////////////////////////////////////////////////////
+
+// generateAndTest:
+//  call func until test applied to its output returns true or counter runs out
+//  return the output if true, false if the counter ran out
+function generateAndTest( generator, testfunc, counter ) {
+    var x;
+    do {
+        x = generator();
+        counter--;
+    } while ( (!testfunc(x)) && (counter>0));
+    if ( counter<=0 ) {
+        return false;
+    } else {
+        return x;
+    }
+}
+
+// generateNewDataset
+//  try to generate a dataset using numbers in [min,max] that is nice
+function generateNewDataset( min, max ) {
+    var generator = function() {
+        var dataset = [];
+        var length = 5 + Math.floor(Math.random()*3)*2;
+        var num;
+        for ( var i=0; i<length; i++ ) {
+            num = randRange(min,max);
+            dataset.push( num );
+        }
+        return dataset;
+    }
+    var result = generateAndTest( generator, isDatasetNice, 5000 );
+    return result;
+}
+
+function generateModifiedDataset( ds, min, max ) {
+    var new_ds;
+    var selector = Math.floor(Math.random()*3);
+//    alert( selector );
+    if ( selector==0 ) {
+        new_ds = generateModifiedDatasetChangeMode( ds, min, max );
+        if (!new_ds) { alert( "generateModifiedDatasetChangeMode failed" ); }
+    } else if ( selector==1 ) {
+        new_ds = generateModifiedDatasetChangeMedian( ds, min, max );
+        if (!new_ds) { alert( "generateModifiedDatasetChangeMedian failed" ); }
+    } else if ( selector==2 ) {
+        new_ds = generateModifiedDatasetRandom( ds, min, max );
+        if (!new_ds) { alert( "generateModifiedDatasetRandom failed" ); }
+    }
+    return new_ds;
+}
+
+function generateModifiedDatasetRandom( ds, min, max ) {
+    var generator = function() {
+        var modify_type;
+        if (ds.length<=6) {
+            modify_type = ["add","substitute"][Math.floor(Math.random()*2)];
+        } else if (ds.length>=8) {
+            modify_type = ["remove","substitute"][Math.floor(Math.random()*2)];
+        } else if (ds.length==7) {
+            modify_type = ["add","remove","substitute"][Math.floor(Math.random()*3)];
+        }
+        var new_ds;
+        switch (modify_type) {
+            case "add":
+                new_ds = ds.slice(0,ds.length);
+                new_ds.push( randRange(min,max) );
+                new_ds.push( randRange(min,max) );
+                break;
+            case "remove":
+                var del_idxs = randomSubsetIdxs(ds,2);
+                new_ds = removeElsByIdxs(ds,del_idxs);
+                break;
+            case "substitute":
+                var sub_idx = randomSubsetIdxs(ds,1)[0];
+                var new_num;
+                do {
+                    new_num = randRange(min,max);
+                } while ( new_num==ds[sub_idx] );
+                new_ds = ( ds.slice(0,sub_idx) );
+                new_ds.push( new_num );
+                new_ds = new_ds.concat( ds.slice(sub_idx+1,ds.length) );
+                break;
+        }
+        return new_ds;
+    }
+    var result = generateAndTest( generator, isDatasetNice, 5000 );
+    return result;
+}
+
+function generateModifiedDatasetChangeMode( ds, min, max ) {
+//    alert( ds );
+    var ds_profile = getFrequencyProfile( ds );
+//    alert( ds_profile.elements );
+//    alert( ds_profile.frequencies );
+    var selector;
+    if ( ( ds_profile.frequencies[0]==2 ) && ( ds_profile.frequencies[1]==1 ) ) {
+        if ( ds.length<=7 ) {
+            selector = [ 0, 1 ][ Math.floor(Math.random()*2) ];
+        } else {
+            selector = 1;
+        }
+    } else if ( ( ds_profile.frequencies[0]==3 ) && ( ds_profile.frequencies[1]==2 ) ) {
+        if ( ds_profile.frequencies[2]==2 ) {    // there must be at least 3 different elements as required by isDatasetNice
+            selector = 3;   // cannot use selector 2 because it would create an ambiguous mode
+        } else {
+            selector = [ 2, 2, 3 ][ Math.floor(Math.random()*3) ];
+        }
+    }
+    // we guarantee that one of the above conditions must be true
+    // by starting with them true and only using moves that keep them true
+//    alert( "generateModifiedDatasetChangeMode: " + selector );
+    switch ( selector ) {
+        case 0: // choose one of the elements whose freq is 1 and increase its freq to 3
+            var add_el = ds_profile.elements.slice(1,ds_profile.elements.length)[ Math.floor(Math.random()*(ds_profile.elements.length-1)) ];
+            var new_ds = (ds.slice(0,ds.length)).concat( [ add_el, add_el ] );
+            break;
+        case 1: // change one instance of the freq 2 element to some freq 1 element
+            var add_idx = 1 + Math.floor( Math.random() * ( ds_profile.elements.length-1 ) );
+            var new_ds = []; var f;
+            for ( var i=0; i<ds_profile.elements.length; i++ ) {
+                if ( i==0 ) {
+                    f=1;
+                } else if ( i==add_idx ) {
+                    f=2;
+                } else {
+                    f=ds_profile.frequencies[i];
+                }
+                for ( var j=0; j<f; j++ ) {
+                    new_ds.push( ds_profile.elements[i] );
+                }
+            }            
+            break;
+        case 2: // remove 2 of the freq 3 element
+            var new_ds = []; var f;
+            for ( var i=0; i<ds_profile.elements.length; i++ ) {
+                if ( i==0 ) {
+                    f=1;
+                } else {
+                    f=ds_profile.frequencies[i];
+                }
+                for ( var j=0; j<f; j++ ) {
+                    new_ds.push( ds_profile.elements[i] );
+                }
+            }            
+            break;
+        case 3: // change one instance of the freq 3 element to the freq 2 element
+            var new_ds = []; var f;
+            for ( var i=0; i<ds_profile.elements.length; i++ ) {
+                if ( i==0 ) {
+                    f=2;
+                } else if ( i==1 ) {
+                    f=3;
+                } else {
+                    f=ds_profile.frequencies[i];
+                }
+                for ( var j=0; j<f; j++ ) {
+                    new_ds.push( ds_profile.elements[i] );
+                }
+            }
+            break;
+    }
+    if (!new_ds) {
+        alert( "false dataset: " + ds + "; selector: " + selector );
+    } else if (!isDatasetNice(new_ds)) {
+        alert( "naughty dataset: " + new_ds + " derived from " + ds + " via selector " + selector );
+    }
+    return new_ds;        
+}
+
+function generateModifiedDatasetChangeMedian( ds, min, max ) {
+    var ds_median = getMedian(ds);
+    var generator = function() {
+        return generateModifiedDatasetRandom(ds,min,max);
+    }
+    var testfunc = function(new_ds) {
+        return ( isDatasetNice(new_ds) && ( getMedian(new_ds)!=ds_median ) );
+    }
+    var new_ds = generateAndTest( generator, testfunc, 1000 );
+    if ( new_ds ) {
+        return new_ds;
+    } else {
+        return generateModifiedDatasetRandom( ds, min, max );
+    }
+}
+
+function isDatasetNice(ds) {
+    var dsprof  = getFrequencyProfile(ds);
+    return     true
+            && ( (ds.length%2)==1 )                                 // odd number of els
+            && ( dsprof.elements.length>2 )                         // more than 2 unique elements
+            && ( dsprof.frequencies[0]<=3 )                         // mode is 3 or less
+            && ( dsprof.frequencies[0]==(dsprof.frequencies[1]+1) ) // contains an el with frequency = mode frequency - 1
+            ;
+}
+
+// createChangeRecord
+//  given new_ds created by applying a legal operation (add 2, remove 2, or change 1) to old_ds,
+//  return an array with same els as new_ds but in order consistent with old_ds
+//  and also a combined array with the els of both, again consistent with old_ds order,
+//  and a record of which of these were added, removed, or changed
+function createChangeRecord( old_ds, new_ds ) {
+    var change_type;
+    if ( old_ds.length==(new_ds.length-2) ) {
+        change_type = "insertion";
+    } else if ( old_ds.length==(new_ds.length+2) ) {
+        change_type = "deletion";
+    } else if ( old_ds.length==new_ds.length ) {
+        change_type = "substitution";
+    } else {
+        alert( "createChangeRecord: unrecognized change type" );
+        return false;
+    }
+    var final_array     = [];
+    var combined_array  = [];
+    var change_record   = [];
+    var nds = new_ds.slice(0,new_ds.length);
+    var el, idx;
+    if ( change_type=="insertion" ) {
+        for ( var i=0; i<old_ds.length; i++ ) {
+            el = old_ds[i];                 // identify current element
+            idx = indexInArray(el,nds);     // find its location in nds
+            nds.splice( idx, 1 );           // remove it from nds
+            final_array.push(el);           // add it to the reordered list
+            combined_array.push(el);        // add it to the record of changes
+            change_record.push("none");     // record it as no change
+        }
+        final_array = final_array.concat( nds );  // add remaining elements of nds to reordered list
+        combined_array = combined_array.concat( nds );    // add these to the record of changes
+        change_record = change_record.concat( [ "ins", "ins" ] ); // should be the case that exactly two were added
+    } else if ( change_type=="deletion" ) {
+        for ( var i=0; i<old_ds.length; i++ ) {
+            el = old_ds[i];                 // identify current element
+            idx = indexInArray(el,nds);     // find its location in nds
+            if ( idx==-1 ) {                // this is an element that was removed
+                combined_array.push(el);        // add it to the record of changes, but not the reordered list
+                change_record.push("del");      // record it as removed
+            } else {                        // the element was not removed
+                nds.splice( idx, 1 );           // remove it from nds
+                final_array.push(el);           // add it to the reordered list
+                combined_array.push(el);        // add it to the record of changes
+                change_record.push("none");     // record it as no change
+            }
+        }
+    } else if ( change_type=="substitution" ) {
+        var sub_idx;
+        for ( var i=0; i<old_ds.length; i++ ) {
+            el = old_ds[i];                 // identify current element
+            idx = indexInArray(el,nds);     // find its location in nds
+            if ( idx!=(-1) ) {                // if it's also in the new dataset 
+                nds.splice( idx, 1 );           // remove it from nds
+                final_array.push(el);           // add it to the reordered list
+                combined_array.push(el);        // add it to the record of changes
+                change_record.push("none");     // record it as no change
+            } else {                        // if it's NOT in the new dataset, then this element was substituted
+//                var isit = nds.constructor===Array;
+//                alert( "isit? " + isit );
+//                var a = "el: " + el + "; nds: " + nds + "; indexInArray(el,nds): " + indexInArray(el,nds);
+//                for ( var i=0; i<nds.length; i++ ) { a += ( "; i: " + i + ", nds[i]: " + nds[i] ); }
+//                alert(a);
+                sub_idx = i;                    // record its position
+                final_array.push( 0 );          // put a placeholder here in the reordered list
+                combined_array.push(el);        // put the original el in the record of changes
+                change_record.push("del");      // record it as removed
+                combined_array.push( 0 );       // put a placeholder here in the record of changes
+                change_record.push("ins");      // record it as added
+            }
+        }
+        el = nds[0];                        // the remaining element (should be only 1) is the added one
+        final_array[ sub_idx ] = el;        // put it into the appropriate position in the reordered list
+        combined_array[ sub_idx+1 ] = el;   // put it into the appropriate position in the record of changes
+    }
+    return { "final_array": final_array, "combined_array": combined_array, "change_record": change_record, "change_type": change_type };
 }
 
 
@@ -842,7 +1051,7 @@ function getSum(a) {
     }
 }
 
-// getMean( a ) : return the integer mean of an array of numbers
+// getMean( a ) : return the integer mean of an array of numbers, or false if 4 * the mean is not an integer
 function getMean(a) {
     return getSum(a)/a.length;
 }
@@ -852,19 +1061,12 @@ function getSorted(a) {
     return (a.slice()).sort(function(a,b){return a-b});
 }
 
-// getMedian( a ) : return the median of an array of numbers, or false if the array has an ambiguous median (i.e. two different central numbers)
+// getMedian( a ) : return the median of an array of numbers, or false if the array has an even number of numbers
 function getMedian(a) {
-    if (((a.length)%2)==1) {
-        return getSorted(a)[ (a.length-1)/2 ];
+    if (((a.length)%2)==0) {
+        return false;
     } else {
-        var l = getSorted(a);
-        var x = l[(a.length/2)-1];
-        var y = l[(a.length/2)];
-        if (x==y) {
-            return x;
-        } else {
-            return false;
-        }
+        return getSorted(a)[ (a.length-1)/2 ];
     }
 }
 
@@ -877,36 +1079,51 @@ function getFrequency(n,a) {
     return f;
 }
 
+// getFrequencyProfile
+//  given an array of numbers, return an array of its unique elements sorted by decreasing frequency,
+//  an array of the frequencies of those elements in the original array
+//  and an associative array pairing elements with frequencies
+function getFrequencyProfile(array) {
+    var frequency = {}, value;
+    
+    // compute frequencies of each value
+    for(var i = 0; i < array.length; i++) {
+        value = array[i];
+        if(value in frequency) {
+            frequency[value]++;
+        }
+        else {
+            frequency[value] = 1;
+        }
+    }
+
+    // make array from the frequency object to de-duplicate
+    var uniques = [];
+    for(value in frequency) {
+        uniques.push(value);
+    }
+
+    // sort the uniques array in descending order by frequency
+    function compareFrequency(a, b) {
+        return frequency[b] - frequency[a];
+    }
+    uniques = uniques.sort(compareFrequency);
+    
+    // make array of frequencies of uniques in orig array
+    var origfreqs = [];
+    for(var i = 0; i < uniques.length; i++) {
+        origfreqs.push( frequency[uniques[i]] );
+    }
+
+    return { "elements": uniques, "frequencies": origfreqs, "elements_frequencies": frequency };
+}
+
 // getMode( a ) : return the mode of an array of numbers, or false if there is more than one mode, or the array is empty
 function getMode(a) {
     if (a.length==0) {
         return false;
     } else {
-        var freqs = {};
-        var max_freq = 0;
-        var el;
-        for ( var i=0; i<a.length; i++ ) {
-            el = a[i];
-            if ( freqs[el]!=undefined ) {
-                freqs[el]++;
-            } else {
-                freqs[el]=1;
-            }
-            if ( freqs[el]>max_freq ) {
-                max_freq=freqs[el];
-            }
-        }
-        var modal_els = [];
-        for ( var k in freqs ) {
-            if ( freqs[k]==max_freq ) {
-                modal_els.push( k );
-            }
-        }
-        if ( modal_els.length > 1 ) {
-            return false;
-        } else {
-            return modal_els[0];
-        }
+        return getFrequencyProfile(a).elements[0];
     }
 }
 
@@ -919,12 +1136,35 @@ function randomSubsetIdxs( a, n ) {
     return shuffle(ids).slice(0,n);
 }
 
+// return a copy of a with elements with indexs in idxs removed
+function removeElsByIdxs( a, idxs ) {
+    var result = [];
+    for ( var i=0; i<a.length; i++ ) {
+        if ( indexInArray(i,idxs)==-1 ) {
+            result.push(a[i]);
+        }
+    }
+    return result;
+}
+
+function indexInArray( el, arr ) {
+    var idx = -1;
+    for ( var i=0; i<arr.length; i++ ) {
+        if ( arr[i]==el ) {
+            idx = i;
+            break;
+        }
+    }
+    return idx;
+}
+
 function shuffle(o) { //v1.0
 	for(var j, x, i = o.length; i; j = parseInt(Math.random() * i), x = o[--i], o[i] = o[j], o[j] = x);
 	return o;
 };
 
 // randRange: return an int between min and max inclusive
-function randRange( min, max ) {
-    return min + Math.floor(Math.random()*(max-min+1));
+function randRange( a, b ) {
+    return a + Math.floor(Math.random()*(b-a+1));
 }
+
