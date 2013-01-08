@@ -145,10 +145,10 @@ $.ajax({
 
 function show_consent_form() {
 	$("#welcome").html(
-		'<h1>Welcome to the Self-Guided Learning Experiment</h1>\
+		'<h1>Welcome to the tutorial on mean, median, and mode.</h1>\
 		<p>Before starting, you need to decide whether or not you give your consent to have your data analyzed for research purposes.\
-		You will need to complete the experiment in order to receive credit for completing the homework assignment, but you may choose whether \
-		or not your data are analyzed for research purposes.</p> \
+		You will need to complete the tutorial in order to receive credit for the homework assignment, but you may choose whether \
+		or not your responses are analyzed for research purposes.</p> \
 		<button id="startbtn" type="button">View Consent Form</button>'
 	);
 
@@ -160,7 +160,7 @@ function show_consent_form() {
 		// TODO: see if they have already seen the consent form, and skip if they have.
 		$("#wrapper").load("consent_form.html" + "?time=" + (new Date().getTime()), function(){
 			// what to do after loading
-			$("#wrapper").append('<button type="button" id="consentBtn">Start Experiment</button>');
+			$("#wrapper").append('<button type="button" id="consentBtn">Start Tutorial</button>');
 			$("#consentBtn").click(function(){
 				// check to see if they gave consent
 				var consent = $("#consent_checkbox").is(':checked');
@@ -213,11 +213,39 @@ function start() {
         ],
         // number of questions should be the same for each category
         "training_questions": [ 
-            { prbID: 0, text: "The scores of several students on a 10-point pop quiz are shown below.", ques: "students' test scores", min: 3, max: 10 },
-            { prbID: 1, text: "The data below shows the numbers of stories of several buildings in a neighborhood.", ques: "number of stories", min: 1, max: 6 },
-            { prbID: 2, text: "In a marketing research study, several consumers each rated how much they liked a product on a scale of 1 to 5. Their ratings are shown below.", ques: "consumers' ratings", min: 1, max: 5 },
-            { prbID: 3, text: "Several fishermen went fishing on the same day. Below you can how many fish the different fishermen caught.", ques: "number of fish caught", min: 0, max: 8 }
-        ]
+            {prbID: 1, text: "The scores of several students on a 50-point pop quiz are shown below.", ques: "students' test scores", min: 10, max: 50},
+			{prbID: 2, text: "The data below shows the numbers of stories of several buildings in a neighborhood.", ques: "number of stories", min: 1, max:50},
+			{prbID: 3, text: "In a marketing research study, several consumers each rated how much they liked a product on a scale of 1 to 100. Their ratings are shown below.", ques: "consumers' ratings", min: 1, max: 100},
+			{prbID: 4, text: "Several fishermen went fishing on the same day. Below you can how many fish the different fishermen caught.", ques: "number of fish caught", min: 0, max: 30},
+			{prbID: 5, text: "The ages of a group of friends are shown below", ques: "age in this group", min: 19, max: 35},
+			{prbID: 6, text: "The grades of a group of students in a Psych course are shown below", ques: "grade in the Psych course", min:50, max:90},
+			{prbID: 7, text: "below are the number of books a student read each month in the past few months", ques: "number of books read", min:0, max:20},
+			{prbID: 8, text: "The weight, in pounds, of a group of people is shown below", ques: "weight in this group of people", min:80, max: 170},
+			{prbID: 9, text: "The price of the items in Mary's shopping cart is shown below", ques: "price of the products in this purchase", min:2, max:30},
+			{prbID: 10, text: "The time each student spent doing an online exercise for a Neuroanatomy course is shown below, in minutes", ques: "time spent doing the exercise", min:15, max:50},
+			{prbID: 11, text: "The list below shows the monthly earnings of the employees of a video store", ques: "employee's earnings", min:1000, max:2000},
+			{prbID: 12, text: "The number of students served in a college cafeteria in the past few months is shown below", ques:"number of students served", min: 90, max:200},
+			{prbID: 13, text: "The number of students attending a workshop on \"Research Ethics\" each time it was offered is shown below", ques:"number of attendees", min:10, max:30},
+			{prbID: 14, text: "Zach's scores in a science course quiz are shown below", ques:"scores", min: 10, max:80},
+			{prbID: 15, text: "The scores below show the total fat content in some products", ques:"fat content", min:4, max:40},
+			{prbID: 16, text: "A middle school teacher takes student's attendance at 9a every day. The number of students in the classroom at that time in the last few classes is shown below", ques: "number of students present at 9am", min:15, max:30},
+			{prbID: 17, text: "The data below shows the total caloric content of several dishes", ques: "caloric content", min:6, max:30},
+			{prbID: 18, text: "The total points scored by several high school basketball players are shown below", ques:"points scored", min:40, max:60},
+			{prbID: 19, text: "below is the number of hours each student in a small college course spends watching TV each week", ques:"hours spent watching TV for students in this class", min:1, max:20},
+			{prbID: 20, text: "Anna practices swimming everyday. Below are the duration of her last practice sessions, in minutes", ques:"time practicing", min:30, max:90},
+			{prbID: 21, text: "The number of exercises completed by each student preparing for an algebra exam is shown below", ques:"number of exercises completed", min:2, max:32},
+			{prbID: 22, text: "The weight for each of several cereal brands sold in a store is shown below, in grams", ques: "weight of cereal boxes", min:200, max:650},
+			{prbID: 23, text: "Below are the mean temperatures in a series of days in a city", ques:"temperature in the city", min:30, max:70},
+			{prbID: 24, text: "The price of a commodity in 10 different cities is given below.", ques: "price of the commodity", min:100, max:200},
+			{prbID: 25, text: "The height of the players of a team is shown below, in inches", ques:"height of the players", min:70, max:90},
+			{prbID: 26, text: "The total number of bikes sold in the past few days in a shop is shown below", ques:"number of bikes sold", min:0, max:20},
+			{prbID: 27, text: "The sizes of the bicycles owned by the students in a class are listed below, in inches.", ques: "size of the bicycles", min:20, max:40},
+			{prbID: 28, text: "The points scored in each game by a middle school's football team are shown below", ques: "scores", min:8, max:30},
+			{prbID: 29, text: "The number of DVDs rented at a local store in the past few days are shown below", ques: "movies rented during this period", min:1, max:30},
+			{prbID: 30, text: "The maximum length in feet of several whales is listed below, in feet.", ques: "whale length", min:30, max:70},
+			{prbID: 31, text: "The number of visitors to a local museum each month in the past few months is shown below", ques: "number of visitors", min:1, max:40},
+			{prbID: 32, text: "A group of friends went bowling. Below are their scores.", ques:"scores", min:10, max:300}
+		]
     };
 
     startExperiment( display_loc, prepend_data, external_content );
