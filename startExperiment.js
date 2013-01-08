@@ -8,30 +8,76 @@
 //  only referenced in main experiment structure
 var startExperiment_pretest_questions;
 var startExperiment_training_questions;
-var startExperiment_skip = { "pretest": false, "instructions": false, "training": false };
+var startExperiment_skip;
 
 // startExperiment: assign global vars, randomize training questions, and run pretest
 function startExperiment( display_loc, prepend_data, external_content ) {
     startExperiment_pretest_questions   = external_content.pretest_questions;
     startExperiment_training_questions  = shuffle( external_content.training_questions.slice(0,external_content.training_questions.length) );
-    doIntroduction( display_loc, prepend_data );
+    
+	// build skip object here
+	var skip_training = false; // for debug purposes;
+	$.ajax({
+		type: 'post',
+		cache: false,
+		url: 'check_progress.php',
+		data: {"sid": prepend_data.subjid},
+		success: function(data)
+		{
+			var progress = JSON.parse(data);
+			progress.training = skip_training;
+			startExperiment_skip = progress;
+			
+			doIntroduction( display_loc, prepend_data );
+		},
+		error: function()
+		{
+			var progress = { "introduction": false, "pretest": false, "instructions": false, "training": false };
+			startExperiment_skip = progress;
+			
+			doIntroduction( display_loc, prepend_data );
+		}
+	});	
 }
 
 // doIntroduction: and then pretest
 function doIntroduction( display_loc, prepend_data ) {
-    var callback = function() {
+	var subjectid = prepend_data.subjid;
+    
+	var callback = function() {
+		// update subject progress in database
+		$.ajax({
+			type: 'post',
+			cache: false,
+			url: 'update_progress.php',
+			data: {"sid": subjectid, "flag": "introduction"}
+		});
+		
         doPretest( display_loc, prepend_data );
     }
     var introduction = [
         "<p>The tutorial consists of 4 parts: a short test, instructions, a set of practice problems, and a few background questions. It should take about 30 minutes. Please do it all in one sitting - your work will not be saved if you close the page before finishing.</p><p><em>IMPORTANT:</em> During the tutorial, <em>DO NOT USE</em> your browser's 'Forward', 'Back', or 'Refresh' buttons. If you do, <em>all your work will be lost.</em></p><p>Click below to start.</p>",
         "<h1>Test Section</h1><p>In this section of the tutorial, you will take a short multiple choice test about mean, median, and mode.</p><p>The purpose of this test is to find out how much you already know about these concepts. So, please don't use any outside sources (books, friends, internet).</p><p>This test doesn't count towards your grade, but it's very similar to the test you'll receive later in class, which <strong>will</strong> count towards your grade. So this test is good practice for the real one.</p><p>Please do <em>NOT</em> use a calculator in this section. You won't have a calculator on the test in class, so it's better to practice without one too.</p>"
     ];
-    doSlideshow( display_loc, introduction, callback );
+	if(startExperiment_skip.introduction){
+		doPretest( display_loc, prepend_data );
+	} else {
+		doSlideshow( display_loc, introduction, callback );
+	}
 }
 
 // doPretest: and then show training instructions
 function doPretest( display_loc, prepend_data ) {
     var callback = function() {
+		// update subject progress in database
+		$.ajax({
+			type: 'post',
+			cache: false,
+			url: 'update_progress.php',
+			data: {"sid": prepend_data.subjid , "flag": "pretest"}
+		});
+		
+		// next section
         doInstructions( display_loc, prepend_data );
     };
     if ( startExperiment_skip.pretest ) {
@@ -39,12 +85,28 @@ function doPretest( display_loc, prepend_data ) {
     } else {
         var questions = startExperiment_pretest_questions;
     }
-    doRadioSurvey( questions, "pretestdata", display_loc, prepend_data, callback );
+	
+	// if we are skipping this because someone has already done it,
+	// then we do not want to write a redundant flag to the database
+	if(questions.length > 0){
+		doRadioSurvey( questions, "pretestdata", display_loc, prepend_data, callback );
+	} else {
+		doInstructions( display_loc, prepend_data );
+	}
 }
 
 // doInstructions: and then run the training
 function doInstructions( display_loc, prepend_data ) {
     var callback = function() {
+		// update subject progress in database
+		$.ajax({
+			type: 'post',
+			cache: false,
+			url: 'update_progress.php',
+			data: {"sid": prepend_data.subjid , "flag": "instructions"}
+		});
+		
+		// next section
         doTraining( display_loc, prepend_data );
     };
     var buttons = '<button type="button" class="option_buttons">Find the <em>Mean</em> for a <em>modified set of data</em>.</button>' +
@@ -72,19 +134,49 @@ function doInstructions( display_loc, prepend_data ) {
         "<p>Finally, suppose again that you did the following problem:</p><div class='example'><p>'Five friends have a hamburger-eating contest. Below you can see the number of hamburgers eaten by each friend.</p><p>[ 10, 8, 8, 4, 5 ]</p><p>Find the <em>mean</em> number of hamburgers eaten.'</p></div><p>But suppose you pressed this button instead:</p><p>" + button_10 + "</p><p>In this case, you'd see a problem like this:</p><div class='example'><p>'Each salesperson in an ad agency is evaluated based on how many contracts they bring in per year. Below you can see the number of contracts won by each of several salespeople.</p><p>[ 5, 11, 9, 9, 17, 20, 2 ]</p><p>Find the <em>mean</em> number of contracts won.'</p></div><p>You're still being asked for the mean, but it's a totally different story problem. You can choose this option if you want to see a new story problem with different data.</p>",
         "<p>You will have to complete at least 5 examples of mean, 5 of median, and 5 of mode, for 15 total. You can do them in any order you like, and it doesn't matter whether (or how much) you switch to new story problems.</p><p>At the top of the page, you'll see a table like this:</p><p>"+progbar+"</p><p>This will tell you how many problems you have finished already for each type. Once you've finished this minimum number, a 'Quit' button will appear which you can use to end the tutorial. However, you can do even more examples if you want - there's no limit!</p><p>OK, that's all! Click below to get started!"
     ];
-    if ( startExperiment_skip.instructions ) { instructions = []; }
-    doSlideshow( display_loc, instructions, callback );
+    if ( startExperiment_skip.instructions ) 
+	{ 
+		doTraining( display_loc, prepend_data );
+	} else {
+		doSlideshow( display_loc, instructions, callback );
+	}
 }
 
 // doTraining: and then go to background demographics
 function doTraining( display_loc, prepend_data ) {
+	// check to see if there is any progress
+	$.ajax({
+		type: 'post',
+		cache: false,
+		url: 'restore_progress.php',
+		data: {"subjid": prepend_data.subjid},
+		success: function(data) { 
+			// trial_data will contain an array with each element representing the trial
+			// data can be accessed by name, i.e. trial_data[0].correct will indicate whether the first trial was correct or not.
+			var trial_data = JSON.parse(data);
+			//start();
+		},
+		error: function(){
+			// this likely means that they did not complete any trials, and therefore should start from scratch.
+			// TODO.
+			//start();
+	}});
+
     var callback = function( data ) {
+		// update subject progress in database
+		$.ajax({
+			type: 'post',
+			cache: false,
+			url: 'update_progress.php',
+			data: {"sid": prepend_data.subjid , "flag": "training"}
+		});
+	
            // display_loc.html( JSON.stringify( data ) );
         doDemographics( display_loc, prepend_data );
     };
     var trial_generator = new TrialGenerator( startExperiment_training_questions );
     if ( startExperiment_skip.training ) { 
-        callback( display_loc, prepend_data );
+        doDemographics( display_loc, prepend_data );
     } else {
         iterateTrialGenerator( display_loc, prepend_data, trial_generator, 0, "first trial", [], callback );
     }
@@ -143,12 +235,12 @@ function doRadioSurvey( questions, table_name, display_loc, prepend_data, callba
         var question = questions.shift();
         doRadioQuestion( display_loc, question, 
             function( data ) {
-                data = $.extend( {}, prepend_data, data );
+                trial_data = $.extend( {}, prepend_data, data );
                 $.ajax({ 
 					type: 'post', 
 					cache: false, 
 					url: 'submit_data_mysql.php',
-					data: { 'table': table_name, 'json': JSON.stringify([[data]] ) },
+					data: { 'table': table_name, 'json': JSON.stringify([[trial_data]] ) },
                     success: function(d) {
 						console.log(d)
                         doRadioSurvey( questions, table_name, display_loc, prepend_data, callback );
@@ -178,7 +270,9 @@ function doRadioQuestion( display_loc, question, callback ) {
     var start_time = new Date();
     resp_func = function(e) {
         e.preventDefault();
-        if ( ( question.answers != undefined ) && ( question.key != undefined ) ) {
+		// check what kind of question this is
+		// pretest question
+        if ( ( question.answers != undefined ) && ( question.correct_response != undefined ) ) {
             var response = $('input[name=radio_option]:checked').val();
             if ( response == undefined ) {
                 alert( "Please select an answer before proceeding." );
@@ -186,8 +280,9 @@ function doRadioQuestion( display_loc, question, callback ) {
                 display_loc.html( "" );
                 var end_time = new Date();
                 $("#question_form").unbind("submit",resp_func);
-                callback( { "number": question.number, "rt": end_time.getTime()-start_time.getTime(), "start": start_time.toString(), "end": end_time.toString(), "correct_response": question.key, "response": response, "correct": (question.key==question.response) } );
+                callback( { "number": question.number, "rt": end_time.getTime()-start_time.getTime(), "start": start_time.toString(), "end": end_time.toString(), "correct_response": question.correct_response, "response": response, "correct": (question.correct_response==response) } );
             }
+		// what kind is this?
         } else if ( question.answers != undefined ) {
             var response = $('input[name=radio_option]:checked').val();
             if ( response == undefined ) {
@@ -197,7 +292,8 @@ function doRadioQuestion( display_loc, question, callback ) {
                 var end_time = new Date();
                 $("#question_form").unbind("submit",resp_func);
                 callback( { "number": question.number, "rt": end_time.getTime()-start_time.getTime(), "start": start_time.toString(), "end": end_time.toString(), "response": response } );
-            }        
+            }   
+		// what kind is this?
         } else {
             display_loc.html( "" );
             var end_time = new Date();
@@ -313,11 +409,10 @@ function doTrial( display_loc, callback ) {
     }
     // organize content and post to display_loc
     display_loc.html( 
-        '<div id="question"><p>' +
-            question_text + '</p></div>' +
-        '<div id="answer"><p>' +
+        '<div id="question">' +
+            question_text + 
             answer_field +
-            answer_button + '</p></div>' +
+            answer_button + '</div></div>' +
         '<div id="feedback"></div>' +
         '<div id="continue">' +
             '<p>' + option_prompt + '</p>' +
@@ -430,7 +525,7 @@ function getNextTrial( option_text ) {
     } else if ( data_rel=="modified" ) {
         reminder = "<p>(Remember, the " + prev_cat + " of the previous data was " + getCentTend(prev_dataset,prev_cat) + ".)</p>";
     }
-    var content     = "<h2>Your Progress</h2>" + progbar + "<h2>Current Problem</h2>" + storytxt + datatxt + questxt + reminder;
+    var content     = "<div id='progressbar'><h3>Your Progress</h3>" + progbar + "</div><div id='question_text'>" + storytxt + datatxt + questxt + reminder;
     var answer      = getCentTend(this.dataset,cat);
     var feedback    = getFeedback(this.dataset,cat);
     
@@ -465,7 +560,7 @@ function getNextTrial( option_text ) {
     // generate data to be recorded (as opposed to above "dataset" which is what is displayed to participant) and return trial specification
     // once we have more realistic content, we should add more detailed data, e.g. the actual correct answer.
     var data        = {
-        "prev_category": prev_cat, "prev_dataset": prev_dataset,
+        "prev_category": prev_cat, "prev_dataset": prev_dataset.toString(),
         "prev_option_text": option_text, "prev_relation": extractRelationFromOptionText( option_text ),
         "storyidx": this.stories[this.story_idx].prbID, "category": cat, "dataset": this.dataset.toString(), "answerkey": answer
     };
@@ -473,11 +568,11 @@ function getNextTrial( option_text ) {
 }
 
 function getProgressBar() {
-    var bar = "<table border='1'><tr>"; // "<h2>Your Progress</h2><table border='1'><tr>";
+    var bar = "<ul>"; 
     for ( var i=0; i<this.categories.length; i++ ) {
-        bar += "<td><strong>"+this.categories[i]+":</strong><br>"+this.completes_tot[i]+" out of "+this.complete_targ+" complete</td>";
+        bar += "<li><h4>"+this.categories[i]+":</h4><p>"+this.completes_tot[i]+" out of "+this.complete_targ+" complete</p></li>";
     }
-    bar += "</tr></table>";
+    bar += "</ul>";
     return bar;
 }
 

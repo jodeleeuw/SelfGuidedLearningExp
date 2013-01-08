@@ -67,15 +67,10 @@ if(isset($_SESSION['user'])){
 		// if no id, add them to database.
 		$insert = mysql_query('INSERT INTO allusers (username) VALUES (\''.$_SESSION['user'].'\')');
 		if($insert) {
-			echo 'Added new student to database';
-			
-			// now do condition assignment
 			$studentid = checkSID($_SESSION['user']);
 			
-			$condition = getNextCondition();
-			assignCondition($studentid, $condition);
-			
-			echo "\n condition assigned.";
+			// add to progress table
+			$insert = mysql_query('INSERT INTO subjectprogress (sid) VALUES ('.$studentid.')');
 		}
 	} elseif($studentid == -2) {
 		// there was a problem with the mysql database
@@ -103,58 +98,13 @@ function checkSID($username) {
 	
 	return $studentid;
 }
-
-function getNextCondition($studentid)
-{
-	$query = 'SELECT conditionkey, COUNT(DISTINCT sid) FROM assigncondition GROUP BY conditionkey';
-	
-	// get the number of subjects already collected in each type
-	$result = mysql_query($query);
-
-	// create an array of conditions based on targets
-	//$conditions = [1,2,3,4];
-
-	$current_numbers = array(
-		0 => 0,
-		1 => 0,
-		2 => 0,
-		3 => 0
-	);
-	
-	while($row = mysql_fetch_array($result))
-	{
-		var_dump($row);
-		$val = intval($row['COUNT(DISTINCT sid)']);
-		$current_numbers[$row['conditionkey']] = $val;
-	}
-	
-	$min = min($current_numbers);
-	
-	for($i = 0; $i < count($current_numbers); $i++)
-	{
-		if($current_numbers[$i]==$min)
-		{
-			return $i;
-		}
-	}
-	
-	return 0;
-	
-	//var_dump($current_numbers);	
-}
-
-function assignCondition($studentid, $condition)
-{
-	$insert = mysql_query('INSERT INTO assigncondition (sid, conditionkey) VALUES ('.$studentid.','.$condition.')');
-	
-}
 	
 ?>
 
 
 <html>
 <head>
-<title>Self-Guided Learning Experiment</title>
+<title>Mean, Median, and Mode Tutorial</title>
 <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js" type="text/javascript"></script>
 <script src="startExperiment.js" type="text/javascript"></script>
 <link rel="stylesheet" type="text/css" href="styles.css" />
@@ -183,11 +133,7 @@ $.ajax({
 		if(data==1)
 		{
 			// they have seen consent form
-			// resume from where they left off?
-			
-			restore_progress();
-			
-			//start();
+			start();
 		} else {
 			// show consent form
 			show_consent_form();
@@ -195,25 +141,7 @@ $.ajax({
 	}
 });
 
-// DAVID to JOSH: this part will need to be revised to take account for progress on pretest and instructions
-function restore_progress(){
-	$.ajax({
-	type: 'post',
-	cache: false,
-	url: 'restore_progress.php',
-	data: {"subjid": sid},
-	success: function(data) { 
-		// trial_data will contain an array with each element representing the trial
-		// data can be accessed by name, i.e. trial_data[0].correct will indicate whether the first trial was correct or not.
-		var trial_data = JSON.parse(data);
-		start();
-	},
-	error: function(){
-		// this likely means that they did not complete any trials, and therefore should start from scratch.
-		// TODO.
-		start();
-	}});
-}
+
 
 function show_consent_form() {
 	$("#welcome").html(
@@ -245,6 +173,14 @@ function show_consent_form() {
 					url: 'submit_data_mysql.php',
 					data: {"table": "consent", "json": JSON.stringify(data)},
 					success: function(data) { start(); }
+				});
+				
+				// update subject progress in database
+				$.ajax({
+					type: 'post',
+					cache: false,
+					url: 'update_progress.php',
+					data: {"sid": sid , "flag": "consent"}
 				});
 			});
 		});

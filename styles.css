@@ -25,6 +25,14 @@ body { background-color: #7D110C; }
 #consent p { font-size: 14px; }
 #consent .lead_right { text-align: right; font-size: 16px; }
 
+#progressbar { border-style: solid; border-color: #eee; border-width: 1px 0px 1px 0px; }
+#progressbar h3 { width: 150px; float: left; margin: 10px 10px 0px 0px; padding: 0; font-family: 'Palatino Linotype', serif; font-size: 16px; font-weight: normal;}
+#progressbar ul { margin: 0; padding: 0; }
+#progressbar li { display: inline-block; margin: 10px; font-size: 14px; }
+#progressbar h4 { margin: 0; padding: 0; }
+#progressbar p { margin: 0; padding: 0; font-size: 14px; }
+
+
 .example { border: 1px solid black; margin-left: 20px; margin-right: 20px }
 
 #feedback { padding: 10px; margin-top: 30px; }
@@ -33,6 +41,6 @@ body { background-color: #7D110C; }
 .feedback_incorrect {  border: 1px solid #faa; background-color: #fdd; }
 
 .option_buttons {
-    width:120px; height:100px;
+    width:180px; height:60px;
     vertical-align:top
 }
