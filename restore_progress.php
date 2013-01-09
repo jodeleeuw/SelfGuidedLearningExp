@@ -5,9 +5,11 @@ $subjid = $_POST['subjid'];
 
 $result = mysql_query('SELECT * FROM trialdata WHERE subjid='.$subjid);
 
+//var_dump($result);
+
 if($result){
-	while($row = mysql_fetch_array($result)){
-		//push row to array
+	while($row = mysql_fetch_array($result, MYSQL_ASSOC)){
+		// push row to array
 		$arr[] = $row;
 	}
 }
