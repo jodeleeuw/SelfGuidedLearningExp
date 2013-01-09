@@ -127,7 +127,7 @@ function doInstructions( display_loc, prepend_data ) {
         "<h1>Instruction Section</h1><p>This section of the tutorial will explain to you more about the concepts of mean, median, and mode.</p>", "<h2>Mean</h2><p>The <strong>mean</strong> is the same as the <strong>average</strong>. To find the mean of a set of numbers, divide their sum by how many numbers there are.</p><p>For example, if the numbers are [ 10, 8, 8, 4, 5, 6, 8 ], then their sum is 49, and there are 7 numbers. So the mean is 49/7=7.</p>",
         "<h2>Median</h2><p>The <strong>median</strong> of a set of numbers is the number that is in the middle when the numbers are put in order.</p><p>To find the median, put them in order and then look to see which number is in the middle.</p><p>For example, if the numbers are [ 10, 8, 8, 4, 5, 6, 8 ], when you put them in order you get [ 4, 5, 6, 8, 8, 8, 10 ]. The number in the middle is 8, so the median is 8.</p><p>(Don't worry about situations when there's an even quantity of numbers-- we won't have any of those in this tutorial.)</p>",
         "<h2>Mode</h2><p>The <strong>mode</strong> of a set of numbers is the number that appears most commonly.</p><p>To find the mode, just count how many times each number appears and find which one appears the most. It's easiest to do this if you put the numbers in order first.</p><p>For example, if the numbers are [ 10, 8, 8, 4, 5, 6, 8 ], when you put them in order you get [ 4, 5, 6, 8, 8, 8, 10 ]. 8 appears 3 times, more often than any other number, so the mode is 8.</p>",
-        "<h1>Practice Section</h1><p>In this section, you'll have a chance to practice the concepts you just learned.</p><p>You will see a series of practice problems for calculating mean, median, and mode. You'll have to answer each problem first, and then you'll be shown the correct answer.</p><p>In this section, please <em>feel free to use a calculator</em>. If you use an online calculator such as <a href='http://calculator.pro/' target='_blank'>Metacalc</a>, be sure to open it in a separate window.</p>",
+        "<h1>Practice Section</h1><p>In this section, you'll have a chance to practice the concepts you just learned.</p><p>You will see a series of practice problems for calculating mean, median, and mode. You'll have to answer each problem first, and then you'll be shown the correct answer.</p><p>In this section, please <em>feel free to use a calculator</em>. If you use an online calculator such as <a href='http://calculator.pro/' target='_blank'>Calculator Pro</a>, be sure to open it in a separate window.</p>",
         "<p>After you complete each example, you will be able to choose what kind of example you want to see next. You'll see a set of buttons like this at the bottom of the page:</p><p>"+buttons+"</p><p>You can select mean, median, or mode by choosing buttons in the different columns. If you choose buttons in the first row, the next example will use the same story problem and either the same data or slightly modified data. If you choose buttons in the second row, the next example will use a completely different story problem and data.</p>",
         "<p>For example, suppose you did the following problem:</p><div class='example'><p>'Five friends have a hamburger-eating contest. Below you can see the number of hamburgers eaten by each friend.</p><p>[ 10, 8, 8, 4, 5 ]</p><p>Find the <em>mean</em> number of hamburgers eaten.'</p></div><p>Then suppose you pressed this button:</p><p>" + button_00 + "</p><p>In this case, you'd see a problem like this:</p><div class='example'><p>'Five friends have a hamburger-eating contest. Below you can see the number of hamburgers eaten by each friend.</p><p>[ 10, 8, 8, 4, 5, <ins>6</ins>, <ins>8</ins> ]</p><p>Find the <em>mean</em> number of hamburgers eaten.'</p></div><p>Notice that you're still being asked about the mean, but the data has been changed a bit. You can choose this option to see how the mean (or median, or mode) changes as a result of changes to the data.</p>",
         "<p>Now, suppose again that you did the following problem:</p><div class='example'><p>'Five friends have a hamburger-eating contest. Below you can see the number of hamburgers eaten by each friend.</p><p>[ 10, 8, 8, 4, 5 ]</p><p>Find the <em>mean</em> number of hamburgers eaten.'</p></div><p>But suppose you pressed this button instead:</p><p>" + button_01 + "</p><p>In this case, you'd see a problem like this:</p><div class='example'><p>'Five friends have a hamburger-eating contest. Below you can see the number of hamburgers eaten by each friend.</p><p>[ 10, 8, 8, 4, 5 ]</p><p>Find the <em>median</em> number of hamburgers eaten.'</p></div><p>Notice that the story and data are the same, but now you're being asked for the median instead of the mean. You can choose this option to compare different ways of calculating central tendency for the same data.</p>",
@@ -368,26 +368,23 @@ function iterateTrialGenerator( display_loc, prepend_data, trial_generator, iter
             data        = $.extend( {}, prepend_data, { "trial_num": iter_num }, data );
             accum_data  = accum_data.concat( [ data ] );
             if ( data.option_text=="Quit" ) {
-                callback( accum_data );
+                var next = function(d) {
+                    callback( accum_data );
+                }
             } else {
-                $.ajax({ 
-					type: 'post', 
-					cache: false, 
-					url: 'submit_data_mysql.php',
-					data: { 'table':'trialdata', 'json': JSON.stringify([[data]] ) },
-                    success: function(d) {
-						console.log(d)
-						iterateTrialGenerator( display_loc, prepend_data, trial_generator, iter_num+1, data.option_text, accum_data, callback );
-					},
-					error: function(d) {
-						console.log(d);
-						iterateTrialGenerator( display_loc, prepend_data, trial_generator, iter_num+1, data.option_text, accum_data, callback );
-/*
-TBD (David): eventually something useful should happen on error, but at least now it will run without submit_data_mysql.php
-*/
-                    }
-                } );
+                var next = function(d) {
+                    console.log(d)
+                    iterateTrialGenerator( display_loc, prepend_data, trial_generator, iter_num+1, data.option_text, accum_data, callback );
+                }
             }
+            $.ajax( { 
+                type: 'post', 
+                cache: false, 
+                url: 'submit_data_mysql.php',
+                data: { 'table':'trialdata', 'json': JSON.stringify([[data]] ) },
+                success: next,
+                error: next
+                } );
         } 
 	);
 }
@@ -460,6 +457,7 @@ function doTrial( display_loc, callback ) {
         if ( isNaN( $('#answer_box').val() ) ) {
             alert( "Please enter a number in the box. Your answer must be a number." );
         } else {
+            $('#answer_box').attr('disabled','disabled');
             $('#answer_button').hide();
             response = $('#answer_box').val();
             if ( ( response==="" ) || ( response===undefined ) ) {
