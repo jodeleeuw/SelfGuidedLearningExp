@@ -125,9 +125,9 @@ function doInstructions( display_loc, prepend_data ) {
         "</tr></table>";
     var instructions = [
         "<h1>Instruction Section</h1><p>This section of the tutorial will explain to you more about the concepts of mean, median, and mode.</p>", "<h2>Mean</h2><p>The <strong>mean</strong> is the same as the <strong>average</strong>. To find the mean of a set of numbers, divide their sum by how many numbers there are.</p><p>For example, if the numbers are [ 10, 8, 8, 4, 5, 6, 8 ], then their sum is 49, and there are 7 numbers. So the mean is 49/7=7.</p>",
-        "<h2>Median</h2><p>The <strong>median</strong> of a set of numbers is the number that is in the middle when the numbers are put in order.</p><p>To find the median, put them in order and then look to see which number is in the middle.</p><p>For example, if the numbers are [ 10, 8, 8, 4, 5, 6, 8 ], when you put them in order you get [ 4, 5, 6, 8, 8, 8, 10 ]. The number in the middle is 8, so the median is 8.</p>",
+        "<h2>Median</h2><p>The <strong>median</strong> of a set of numbers is the number that is in the middle when the numbers are put in order.</p><p>To find the median, put them in order and then look to see which number is in the middle.</p><p>For example, if the numbers are [ 10, 8, 8, 4, 5, 6, 8 ], when you put them in order you get [ 4, 5, 6, 8, 8, 8, 10 ]. The number in the middle is 8, so the median is 8.</p><p>(Don't worry about situations when there's an even quantity of numbers-- we won't have any of those in this tutorial.)</p>",
         "<h2>Mode</h2><p>The <strong>mode</strong> of a set of numbers is the number that appears most commonly.</p><p>To find the mode, just count how many times each number appears and find which one appears the most. It's easiest to do this if you put the numbers in order first.</p><p>For example, if the numbers are [ 10, 8, 8, 4, 5, 6, 8 ], when you put them in order you get [ 4, 5, 6, 8, 8, 8, 10 ]. 8 appears 3 times, more often than any other number, so the mode is 8.</p>",
-        "<h1>Practice Section</h1><p>In this section, you'll have a chance to practice the concepts you just learned.</p><p>You will see a series of practice problems for calculating mean, median, and mode. You'll have to answer each problem first, and then you'll be shown the correct answer.</p><p>In this section, please <em>feel free to use a calculator</em>. If you use an online calculator such as <a href='http://www.metacalc.com' target='_blank'>Metacalc</a>, be sure to open it in a separate window.</p>",
+        "<h1>Practice Section</h1><p>In this section, you'll have a chance to practice the concepts you just learned.</p><p>You will see a series of practice problems for calculating mean, median, and mode. You'll have to answer each problem first, and then you'll be shown the correct answer.</p><p>In this section, please <em>feel free to use a calculator</em>. If you use an online calculator such as <a href='http://calculator.pro/' target='_blank'>Metacalc</a>, be sure to open it in a separate window.</p>",
         "<p>After you complete each example, you will be able to choose what kind of example you want to see next. You'll see a set of buttons like this at the bottom of the page:</p><p>"+buttons+"</p><p>You can select mean, median, or mode by choosing buttons in the different columns. If you choose buttons in the first row, the next example will use the same story problem and either the same data or slightly modified data. If you choose buttons in the second row, the next example will use a completely different story problem and data.</p>",
         "<p>For example, suppose you did the following problem:</p><div class='example'><p>'Five friends have a hamburger-eating contest. Below you can see the number of hamburgers eaten by each friend.</p><p>[ 10, 8, 8, 4, 5 ]</p><p>Find the <em>mean</em> number of hamburgers eaten.'</p></div><p>Then suppose you pressed this button:</p><p>" + button_00 + "</p><p>In this case, you'd see a problem like this:</p><div class='example'><p>'Five friends have a hamburger-eating contest. Below you can see the number of hamburgers eaten by each friend.</p><p>[ 10, 8, 8, 4, 5, <ins>6</ins>, <ins>8</ins> ]</p><p>Find the <em>mean</em> number of hamburgers eaten.'</p></div><p>Notice that you're still being asked about the mean, but the data has been changed a bit. You can choose this option to see how the mean (or median, or mode) changes as a result of changes to the data.</p>",
         "<p>Now, suppose again that you did the following problem:</p><div class='example'><p>'Five friends have a hamburger-eating contest. Below you can see the number of hamburgers eaten by each friend.</p><p>[ 10, 8, 8, 4, 5 ]</p><p>Find the <em>mean</em> number of hamburgers eaten.'</p></div><p>But suppose you pressed this button instead:</p><p>" + button_01 + "</p><p>In this case, you'd see a problem like this:</p><div class='example'><p>'Five friends have a hamburger-eating contest. Below you can see the number of hamburgers eaten by each friend.</p><p>[ 10, 8, 8, 4, 5 ]</p><p>Find the <em>median</em> number of hamburgers eaten.'</p></div><p>Notice that the story and data are the same, but now you're being asked for the median instead of the mean. You can choose this option to compare different ways of calculating central tendency for the same data.</p>",
@@ -218,20 +218,20 @@ function doDemographics( display_loc, prepend_data ) {
           "text": "<p>Are you male or female?</p>",
           "answers": [ "Male", "Female" ] },
         { "number": 2,
-          "text": "<p>Using the following scale, rate <em>how much you enjoyed</em> the training you were just given:</p>",
-          "answers": [ "1 = extremely disliked", "2 = somewhat disliked", "3 = neutral", "4 = somewhat enjoyed", "5 = extremely enjoyed" ] },
+          "text": "<p>How much do you agree with this statement? 'I enjoyed the statistics training that I just completed.'</p>",
+          "answers": [ "1 = strongly disagree", "2 = disagree", "3 = neutral", "4 = agree", "5 = strongly agree" ] },
         { "number": 3,
-          "text": "<p>Using the following scale, rate <em>how useful to you</em> was the training you were just given:</p>",
-          "answers": [ "1 = not at all useful", "2 = not very useful", "3 = neutral", "4 = somewhat useful", "5 = extremely useful" ] },
+          "text": "<p>How much do you agree with this statement? 'The training that I just completed helped me to understand mean, median, and mode.'</p>",
+          "answers": [ "1 = strongly disagree", "2 = disagree", "3 = neutral", "4 = agree", "5 = strongly agree" ] },
         { "number": 4,
-          "text": "<p>How much anxiety do you feel doing math?</p>",
-          "answers": [ "1 = low anxiety", "2 = slight anxiety", "3 = moderate anxiety", "4 = quite a bit of anxiety", "5 = high anxiety" ] },
+          "text": "<p>How much do you agree with this statement? 'I generally feel anxious when I am doing mathematics in a class.'</p>",
+          "answers": [ "1 = strongly disagree", "2 = disagree", "3 = neutral", "4 = agree", "5 = strongly agree" ] },
         { "number": 5,
-          "text": "<p>How much do you like math?</p>",
-          "answers": [ "1 = I hate math", "2 = I don't like math", "3 = I feel neutral", "4 = I like math", "5 = I like math a lot" ] },
+          "text": "<p>How much do you agree with this statement? 'I enjoy doing mathematics.'</p>",
+          "answers": [ "1 = strongly disagree", "2 = disagree", "3 = neutral", "4 = agree", "5 = strongly agree" ] },
         { "number": 6,
-          "text": "<p>Before this training, how much did you already know about how to calculate means, medians, and modes?</p>",
-          "answers": [ "1 = I didn't know at all", "2 = I didn't know very much", "3 = I knew a little", "4 = I knew somewhat", "5 = I knew very well" ] }
+          "text": "<p>How much do you agree with this statement? 'Before this training, I already knew how to calculate means, medians, and modes.'</p>",
+          "answers": [ "1 = strongly disagree", "2 = disagree", "3 = neutral", "4 = agree", "5 = strongly agree" ] }
     ];
     doRadioSurvey( questions, "demographicdata", display_loc, prepend_data, callback );
 }    
@@ -479,7 +479,6 @@ function doTrial( display_loc, callback ) {
             } else {
                 $('#feedback').addClass('feedback_incorrect');
                 setTimeout( function() { $('#continue').show(); }, 10000 );
-//                setTimeout( function() { $('#continue').show(); }, 1 );
             }
         }
     } );
@@ -843,10 +842,12 @@ function generateNewDataset( min, max ) {
     return result;
 }
 
+var generateModifiedDataset_counter = Math.floor(Math.random()*3);
+
 function generateModifiedDataset( ds, min, max ) {
     var new_ds;
-    var selector = Math.floor(Math.random()*3);
-//    alert( selector );
+    var selector = ( generateModifiedDataset_counter % 3 );
+    generateModifiedDataset_counter++;
     if ( selector==0 ) {
         new_ds = generateModifiedDatasetChangeMode( ds, min, max );
         if (!new_ds) { alert( "generateModifiedDatasetChangeMode failed" ); }
@@ -899,27 +900,28 @@ function generateModifiedDatasetRandom( ds, min, max ) {
 }
 
 function generateModifiedDatasetChangeMode( ds, min, max ) {
-//    alert( ds );
     var ds_profile = getFrequencyProfile( ds );
-//    alert( ds_profile.elements );
-//    alert( ds_profile.frequencies );
     var selector;
     if ( ( ds_profile.frequencies[0]==2 ) && ( ds_profile.frequencies[1]==1 ) ) {
+        // for datasets with mode freq 2
+        //  selector 0: add 2 copies of an element with freq 1, making it the new mode
+        //  selector 1: change one instance of the mode to one of the other elements, making it the new mode
         if ( ds.length<=7 ) {
-            selector = [ 0, 0, 1 ][ Math.floor(Math.random()*2) ];
+            selector = 0;       // both 0 and 1 are possible here, but I prefer 0
         } else {
-            selector = 1;
+            selector = 1;       // only 1 is possible here: cannot add to the set if its length is >7
         }
     } else if ( ( ds_profile.frequencies[0]==3 ) && ( ds_profile.frequencies[1]==2 ) ) {
-        if ( ds_profile.frequencies[2]==2 ) {    // there must be at least 3 different elements as required by isDatasetNice
-            selector = 3;   // cannot use selector 2 because it would create an ambiguous mode
+        // for datasets with mode freq 3
+        //  selector 2: remove 2 copies of the mode, making the element with freq 2 the new mode
+        //  selector 3: change one instance of the mode to a freq 2 element, making that element the new mode
+        if ( ds_profile.frequencies[2]==2 ) {
+            // must be >=3 different elements as required by isDatasetNice, so above test always possible
+            selector = 3;       // only 3 is possible here: removing 2 mode instances would create ambiguous mode
         } else {
-            selector = [ 2, 2, 3 ][ Math.floor(Math.random()*3) ];
+            selector = 2;       // both 2 and 3 are possible here, but I prefer 2
         }
     }
-    // we guarantee that one of the above conditions must be true
-    // by starting with them true and only using moves that keep them true
-//    alert( "generateModifiedDatasetChangeMode: " + selector );
     switch ( selector ) {
         case 0: // choose one of the elements whose freq is 1 and increase its freq to 3
             var add_el = ds_profile.elements.slice(1,ds_profile.elements.length)[ Math.floor(Math.random()*(ds_profile.elements.length-1)) ];
@@ -1063,11 +1065,6 @@ function createChangeRecord( old_ds, new_ds ) {
                 combined_array.push(el);        // add it to the record of changes
                 change_record.push("none");     // record it as no change
             } else {                        // if it's NOT in the new dataset, then this element was substituted
-//                var isit = nds.constructor===Array;
-//                alert( "isit? " + isit );
-//                var a = "el: " + el + "; nds: " + nds + "; indexInArray(el,nds): " + indexInArray(el,nds);
-//                for ( var i=0; i<nds.length; i++ ) { a += ( "; i: " + i + ", nds[i]: " + nds[i] ); }
-//                alert(a);
                 sub_idx = i;                    // record its position
                 final_array.push( 0 );          // put a placeholder here in the reordered list
                 combined_array.push(el);        // put the original el in the record of changes
