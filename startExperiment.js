@@ -188,7 +188,7 @@ function doTraining( display_loc, prepend_data ) {
                 var iter_num    = trial_data.length;
                 var option_text = "recovery: " + next_category;
                 iterateTrialGenerator( display_loc, prepend_data, trial_generator, iter_num, option_text, trial_data, callback );
-            }
+            },
             error: function(){
                 // this likely means that they did not complete any trials, and therefore should start from scratch.
                 // we do that by just creating a trial generator without previous progress information
