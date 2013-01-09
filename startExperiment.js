@@ -170,24 +170,31 @@ function doTraining( display_loc, prepend_data ) {
                 // trial_data will contain an array with each element representing the trial
                 // data can be accessed by name, i.e. trial_data[0].correct will indicate whether the first trial was correct or not.
                 var trial_data = JSON.parse(data);
-                // figure out how many trials were completed in each category and which category was requested next
-                var progress_by_category = { "Mean": 0, "Median": 0, "Mode": 0 };
-                for ( var i=0; i<trial_data.length; i++ ) {
-                    if ( trial_data.category!=undefined ) {
-                        progress_by_category[ trial_data.category ] += 1;
+                if ( trial_data != undefined ) {
+                    // figure out how many trials were completed in each category and which category was requested next
+                    var progress_by_category = { "Mean": 0, "Median": 0, "Mode": 0 };
+                    for ( var i=0; i<trial_data.length; i++ ) {
+                        if ( trial_data.category!=undefined ) {
+                            progress_by_category[ trial_data.category ] += 1;
+                        }
                     }
-                }
-                var next_category;
-                if ( trial_data.option_category!=undefined ) {
-                    next_category = trial_data.option_category;
+                    var next_category;
+                    if ( trial_data.option_category!=undefined ) {
+                        next_category = trial_data.option_category;
+                    } else {
+                        next_category = [ "Mean", "Median", "Mode" ][ Math.floor( Math.random()*3 ) ];
+                    }
+                    // create a trial generator using the progress information
+                    var trial_generator = new TrialGenerator( startExperiment_training_questions, progress_by_category );
+                    var iter_num    = trial_data.length;
+                    var option_text = "recovery: " + next_category;
+                    iterateTrialGenerator( display_loc, prepend_data, trial_generator, iter_num, option_text, trial_data, callback );
                 } else {
-                    next_category = [ "Mean", "Median", "Mode" ][ Math.floor( Math.random()*3 ) ];
+                    // this likely means that they did not complete any trials, and therefore should start from scratch.
+                    // we do that by just creating a trial generator without previous progress information
+                    var trial_generator = new TrialGenerator( startExperiment_training_questions );
+                    iterateTrialGenerator( display_loc, prepend_data, trial_generator, 0, "first trial", [], callback );
                 }
-                // create a trial generator using the progress information
-                var trial_generator = new TrialGenerator( startExperiment_training_questions, progress_by_category );
-                var iter_num    = trial_data.length;
-                var option_text = "recovery: " + next_category;
-                iterateTrialGenerator( display_loc, prepend_data, trial_generator, iter_num, option_text, trial_data, callback );
             },
             error: function(){
                 // this likely means that they did not complete any trials, and therefore should start from scratch.
