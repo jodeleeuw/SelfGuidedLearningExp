@@ -144,24 +144,7 @@ function doInstructions( display_loc, prepend_data ) {
 
 // doTraining: and then go to background demographics
 function doTraining( display_loc, prepend_data ) {
-	// check to see if there is any progress
-	$.ajax({
-		type: 'post',
-		cache: false,
-		url: 'restore_progress.php',
-		data: {"subjid": prepend_data.subjid},
-		success: function(data) { 
-			// trial_data will contain an array with each element representing the trial
-			// data can be accessed by name, i.e. trial_data[0].correct will indicate whether the first trial was correct or not.
-			var trial_data = JSON.parse(data);
-			//start();
-		},
-		error: function(){
-			// this likely means that they did not complete any trials, and therefore should start from scratch.
-			// TODO.
-			//start();
-	}});
-
+    // callback is called at the end of training
     var callback = function( data ) {
 		// update subject progress in database
 		$.ajax({
@@ -174,11 +157,45 @@ function doTraining( display_loc, prepend_data ) {
            // display_loc.html( JSON.stringify( data ) );
         doDemographics( display_loc, prepend_data );
     };
-    var trial_generator = new TrialGenerator( startExperiment_training_questions );
-    if ( startExperiment_skip.training ) { 
+	// check to see if there is any progress
+    if ( startExperiment_skip.training ) {
         doDemographics( display_loc, prepend_data );
     } else {
-        iterateTrialGenerator( display_loc, prepend_data, trial_generator, 0, "first trial", [], callback );
+        $.ajax({
+            type: 'post',
+            cache: false,
+            url: 'restore_progress.php',
+            data: {"subjid": prepend_data.subjid},
+            success: function(data) {
+                // trial_data will contain an array with each element representing the trial
+                // data can be accessed by name, i.e. trial_data[0].correct will indicate whether the first trial was correct or not.
+                var trial_data = JSON.parse(data);
+                // figure out how many trials were completed in each category and which category was requested next
+                var progress_by_category = { "Mean": 0, "Median": 0, "Mode": 0 };
+                for ( var i=0; i<trial_data.length; i++ ) {
+                    if ( trial_data.category!=undefined ) {
+                        progress_by_category[ trial_data.category ] += 1;
+                    }
+                }
+                var next_category;
+                if ( trial_data.option_category!=undefined ) {
+                    next_category = trial_data.option_category;
+                } else {
+                    next_category = [ "Mean", "Median", "Mode" ][ Math.floor( Math.random()*3 ) ];
+                }
+                // create a trial generator using the progress information
+                var trial_generator = new TrialGenerator( startExperiment_training_questions, progress_by_category );
+                var iter_num    = trial_data.length;
+                var option_text = "recovery: " + next_category;
+                iterateTrialGenerator( display_loc, prepend_data, trial_generator, iter_num, option_text, trial_data, callback );
+            }
+            error: function(){
+                // this likely means that they did not complete any trials, and therefore should start from scratch.
+                // we do that by just creating a trial generator without previous progress information
+                var trial_generator = new TrialGenerator( startExperiment_training_questions );
+                iterateTrialGenerator( display_loc, prepend_data, trial_generator, 0, "first trial", [], callback );
+            }
+        });
     }
 }
 
@@ -454,7 +471,7 @@ function doTrial( display_loc, callback ) {
                 $('#continue').show();
             } else {
                 $('#feedback').addClass('feedback_incorrect');
-                setTimeout( function() { $('#continue').show(); }, 3500 );
+                setTimeout( function() { $('#continue').show(); }, 10000 );
 //                setTimeout( function() { $('#continue').show(); }, 1 );
             }
         }
@@ -467,16 +484,24 @@ function doTrial( display_loc, callback ) {
 }
 
 // TrialGenerator class
-TrialGenerator = function( questions ) {
+TrialGenerator = function( questions, progress_by_category ) {
     this.stories    = questions;
     this.categories = [ "Mean", "Median", "Mode" ];
     this.complete_targ  = 5;        // must complete this many probs in each category before Quit option available
     this.completes_tot  = [];       // total number currently completed in each category
     this.completes_rct  = [];       // number completed in each category since last change of story or data set
-    for ( var i=0; i<this.categories.length; i++ ) { this.completes_tot[i] = 0; }
+    if ( progress_by_category==undefined ) {
+        for ( var i=0; i<this.categories.length; i++ ) {
+            this.completes_tot[i] = 0;
+        }
+    } else {
+        for ( var i=0; i<this.categories.length; i++ ) {
+            this.completes_tot[i] = progress_by_category[ this.categories[i] ];
+        }
+    }
     this.getNextTrial       = getNextTrial;
     this.getOptionsText     = getOptionsText;
-    this.getNextDataset      = getNextDataset;
+    this.getNextDataset     = getNextDataset;
     this.getProgressBar     = getProgressBar;
 }
 
@@ -491,9 +516,15 @@ function getNextTrial( option_text ) {
     var prev_cat;
     var prev_dataset;
     if ( option_text=="first trial" ) {
-        prev_cat        = "NA";
-        prev_dataset    = "NA";
+        prev_cat        = "NA (first trial)";
+        prev_dataset    = "NA (first trial)";
         this.cat_idx    = 0;
+        this.story_idx  = 0;
+        data_rel        = "random";
+    } else if ( option_text.indexOf( "recovery" ) != -1 ) {
+        prev_cat        = "NA (recovery)";
+        prev_dataset    = "NA (recovery)";
+        this.cat_idx    = indexInArray( extractCategoryFromOptionText( option_text ), this.categories );
         this.story_idx  = 0;
         data_rel        = "random";
     } else {
@@ -721,7 +752,7 @@ function extractDataFromOptionText( category, option_text ) {
     } else if ( data_relation=="random" ) {
         option_similarity = "unrelated";
     }
-    return { "option_type": option_type, "option_relation": data_relation, "option_similarity": option_similarity };
+    return { "option_category": new_category, "option_type": option_type, "option_relation": data_relation, "option_similarity": option_similarity };
 }
 
 function getCentTend( dataset, measure ) {
