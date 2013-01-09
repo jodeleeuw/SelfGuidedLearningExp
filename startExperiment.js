@@ -174,13 +174,13 @@ function doTraining( display_loc, prepend_data ) {
                     // figure out how many trials were completed in each category and which category was requested next
                     var progress_by_category = { "Mean": 0, "Median": 0, "Mode": 0 };
                     for ( var i=0; i<trial_data.length; i++ ) {
-                        if ( trial_data.category!=undefined ) {
-                            progress_by_category[ trial_data.category ] += 1;
+                        if ( trial_data[i].category!=undefined ) {
+                            progress_by_category[ trial_data[i].category ] += 1;
                         }
                     }
                     var next_category;
-                    if ( trial_data.option_category!=undefined ) {
-                        next_category = trial_data.option_category;
+                    if ( trial_data[ trial_data.length-1 ].option_category!=undefined ) {
+                        next_category = trial_data[ trial_data.length-1 ].option_category;
                     } else {
                         next_category = [ "Mean", "Median", "Mode" ][ Math.floor( Math.random()*3 ) ];
                     }
