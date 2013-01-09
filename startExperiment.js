@@ -831,7 +831,15 @@ function generateNewDataset( min, max ) {
         }
         return dataset;
     }
-    var result = generateAndTest( generator, isDatasetNice, 5000 );
+    var tester = function( dataset ) {
+        return ( isDatasetNice( dataset ) && ( getFrequencyProfile( dataset ).frequencies[0]==3 ) );
+    }
+    // if possible, try to generate a dataset with a mode with frequency 3
+    var result = generateAndTest( generator, tester, 2000 );
+    // if you failed, just generate any nice dataset
+    if ( !result ) {
+        result = generateAndTest( generator, isDatasetNice, 5000 );
+    }
     return result;
 }
 
@@ -898,7 +906,7 @@ function generateModifiedDatasetChangeMode( ds, min, max ) {
     var selector;
     if ( ( ds_profile.frequencies[0]==2 ) && ( ds_profile.frequencies[1]==1 ) ) {
         if ( ds.length<=7 ) {
-            selector = [ 0, 1 ][ Math.floor(Math.random()*2) ];
+            selector = [ 0, 0, 1 ][ Math.floor(Math.random()*2) ];
         } else {
             selector = 1;
         }
@@ -946,7 +954,7 @@ function generateModifiedDatasetChangeMode( ds, min, max ) {
                 }
             }            
             break;
-        case 3: // change one instance of the freq 3 element to the freq 2 element
+        case 3: // change one instance of the freq 3 element to a freq 2 element
             var new_ds = []; var f;
             for ( var i=0; i<ds_profile.elements.length; i++ ) {
                 if ( i==0 ) {
