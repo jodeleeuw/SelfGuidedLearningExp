@@ -179,7 +179,9 @@ function doTraining( display_loc, prepend_data ) {
                         }
                     }
                     var next_category;
-                    if ( trial_data[ trial_data.length-1 ].option_category!=undefined ) {
+                    if ( trial_data[ trial_data.length-1 ].option_category==undefined ) {
+                        next_category = [ "Mean", "Median", "Mode" ][ Math.floor( Math.random()*3 ) ];
+                    } else if ( indexInArray( trial_data[ trial_data.length-1 ].option_category, [ "Mean", "Median", "Mode" ] )!=-1 ) {
                         next_category = trial_data[ trial_data.length-1 ].option_category;
                     } else {
                         next_category = [ "Mean", "Median", "Mode" ][ Math.floor( Math.random()*3 ) ];
